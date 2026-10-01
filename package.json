@@ -1,0 +1,23 @@
+{
+  "name": "syncsafe",
+  "version": "1.0.0",
+  "description": "SyncSafe: PS-13 Multi-Device Document Synchronization Prototype",
+  "scripts": {
+    "dev:server": "npm run dev --prefix server",
+    "dev:client": "npm run dev --prefix client",
+    "build:server": "npm run build --prefix server",
+    "build:client": "npm run build --prefix client",
+    "build": "npm run build:server && npm run build:client",
+    "test": "npm test --prefix server",
+    "start": "node server/dist/index.js"
+  },
+  "keywords": [
+    "sync",
+    "offline-first",
+    "conflict-resolution",
+    "indexeddb",
+    "ps-13"
+  ],
+  "author": "SyncSafe Team",
+  "license": "MIT"
+}
