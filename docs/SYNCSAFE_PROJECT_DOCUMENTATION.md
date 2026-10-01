@@ -1,689 +1,634 @@
 # SyncSafe: Multi-Device File Synchronization & Security System
-### Problem Statement PS-13: Google Drive — Same File, Multiple Devices
-**Engineering Project Documentation & Technical Whitepaper**
+### Hackathon Project Documentation & Technical Whitepaper
+**Problem Statement PS-13: Google Drive – Same File, Multiple Devices**
 
 ---
 
 **Project Name:** SyncSafe  
-**Track / Problem Statement:** PS-13 (Google Drive – Same File, Multiple Devices)  
-**Team Repository:** [https://github.com/rsaisachidhanandam-stack/GenGD](https://github.com/rsaisachidhanandam-stack/GenGD) (Branch: `main`)  
-**Implementation Status:** Fully Implemented, Tested, and Verified Prototype  
-**Technology Stack:** Express.js, TypeScript, SQLite (`better-sqlite3` in WAL Mode), Vite, React, IndexedDB (`idb`), Vitest, Supertest  
+**Problem Statement:** PS-13 (Google Drive – Same File, Multiple Devices)  
+**Repository:** [https://github.com/rsaisachidhanandam-stack/GenGD](https://github.com/rsaisachidhanandam-stack/GenGD) (Branch: `main`)  
+**Status:** Working, Fully Verified Functional Prototype (Not a UI-only Mockup)  
+**Implementation Stack:** Express.js, TypeScript, SQLite (`better-sqlite3` in WAL mode), React, Vite, IndexedDB (`idb`), Vitest, Supertest  
+**Verification:** 16 / 16 Automated Test Scenarios Passing (100% Pass Rate)  
 
 ---
 
 ## Table of Contents
 
 1. [Executive Summary](#1-executive-summary)
-2. [Project Background & The Problem in Plain Language](#2-project-background--the-problem-in-plain-language)
-3. [The Core Principle of SyncSafe](#3-the-core-principle-of-syncsafe)
-4. [Existing Industry Solutions: A Comparative Analysis](#4-existing-industry-solutions-a-comparative-analysis)
-5. [The Fundamental Problem With Naive Synchronization](#5-the-fundamental-problem-with-naive-synchronization)
-6. [The SyncSafe Solution Architecture](#6-the-syncsafe-solution-architecture)
-7. [Database Schema & Data Model Design](#7-database-schema--data-model-design)
-8. [Immutable Versioning Architecture](#8-immutable-versioning-architecture)
-9. [Base-Version Concurrency Control](#9-base-version-concurrency-control)
-10. [Field-Level 3-Way Auto-Merge Engine](#10-field-level-3-way-auto-merge-engine)
-11. [Conflict Detection & State Preservation](#11-conflict-detection--state-preservation)
-12. [Transparent Conflict Resolution Workflow](#12-transparent-conflict-resolution-workflow)
-13. [Durable Client-Side Offline Storage (IndexedDB)](#13-durable-client-side-offline-storage-indexeddb)
-14. [Offline Workflow, Reconnection & Bounded Retry](#14-offline-workflow-reconnection--bounded-retry)
-15. [ClientSyncCoordinator & Truthful UI State Machine](#15-clientsynccoordinator--truthful-ui-state-machine)
-16. [Idempotency & Safe Retry Processing (`changeId`)](#16-idempotency--safe-retry-processing-changeid)
-17. [Concurrent Writes & ACID Database Concurrency (`SEC03`)](#17-concurrent-writes--acid-database-concurrency-sec03)
-18. [Security & Document Access Authorization](#18-security--document-access-authorization)
-19. [Phased Milestones Completed](#19-phased-milestones-completed)
-20. [Automated Acceptance Testing & Results Matrix](#20-automated-acceptance-testing--results-matrix)
-21. [Interactive Dual-Device Simulator UI](#21-interactive-dual-device-simulator-ui)
-22. [Complete 20-Step Hackathon Demonstration Script](#22-complete-20-step-hackathon-demonstration-script)
-23. [Why SyncSafe Is Different: Key Engineering Choices](#23-why-syncsafe-is-different-key-engineering-choices)
-24. [Future Architectural Roadmap](#24-future-architectural-roadmap)
-25. [System Limitations & Boundary Conditions](#25-system-limitations--boundary-conditions)
-26. [Comprehensive Judge Questions & Answers (18 Q&As)](#26-comprehensive-judge-questions--answers)
-27. [The 60-Second Spoken Pitch](#27-the-60-second-spoken-pitch)
-28. [End-to-End System Architecture Diagram](#28-end-to-end-system-architecture-diagram)
-29. [Conclusion](#29-conclusion)
+2. [Problem Statement](#2-problem-statement)
+3. [The Problem in Simple Terms](#3-the-problem-in-simple-terms)
+4. [Why Naive Synchronization Fails](#4-why-naive-synchronization-fails)
+5. [Existing Solution Landscape](#5-existing-solution-landscape)
+6. [The SyncSafe Solution](#6-the-syncsafe-solution)
+7. [Core Design Principle](#7-core-design-principle)
+8. [System Architecture](#8-system-architecture)
+9. [End-to-End Workflow](#9-end-to-end-workflow)
+10. [Database Architecture](#10-database-architecture)
+11. [Immutable Versioning System](#11-immutable-versioning-system)
+12. [Base-Version Concurrency Control](#12-base-version-concurrency-control)
+13. [Field-Level 3-Way Auto-Merge Engine](#13-field-level-3-way-auto-merge-engine)
+14. [Conflict Detection & State Preservation](#14-conflict-detection--state-preservation)
+15. [Conflict Resolution Workflow](#15-conflict-resolution-workflow)
+16. [Durable Offline Synchronization (IndexedDB)](#16-durable-offline-synchronization-indexeddb)
+17. [Retry Handling & Idempotency (`changeId`)](#17-retry-handling--idempotency-changeid)
+18. [Concurrent Write Handling & ACID Transactions](#18-concurrent-write-handling--acid-transactions)
+19. [Security & Access Control](#19-security--access-control)
+20. [Client Synchronization State Machine](#20-client-synchronization-state-machine)
+21. [Dual-Device Simulator Interface](#21-dual-device-simulator-interface)
+22. [Implementation Milestones](#22-implementation-milestones)
+23. [Testing & Verification (16 / 16 Passed)](#23-testing--verification-16--16-passed)
+24. [Step-by-Step Hackathon Demonstration Script](#24-step-by-step-hackathon-demonstration-script)
+25. [Engineering Differentiators](#25-engineering-differentiators)
+26. [Current System Limitations](#26-current-system-limitations)
+27. [Future Architectural Roadmap](#27-future-architectural-roadmap)
+28. [Comprehensive Judge Questions & Answers (18 Q&As)](#28-comprehensive-judge-questions--answers)
+29. [The 60-Second Spoken Pitch](#29-the-60-second-spoken-pitch)
+30. [End-to-End Architecture & Sync Flow Diagram](#30-end-to-end-architecture--sync-flow-diagram)
+31. [Final Conclusion](#31-final-conclusion)
 
 ---
 
 ## 1. Executive Summary
 
-Modern multi-device computing presents a fundamental distributed systems challenge: **how can a single user simultaneously access and edit the same document across multiple devices (e.g., a laptop and a smartphone), even with intermittent or zero internet connectivity, without losing their work?**
+SyncSafe is a working, fully verified multi-device document synchronization prototype developed to solve **PS-13: Google Drive – Same File, Multiple Devices**. 
 
-Traditional consumer synchronization mechanisms frequently fall into one of two dangerous extremes:
-1. **Blind "Last-Write-Wins" (LWW)**: The server blindly overwrites previous edits with whichever payload happened to arrive last over the network, quietly destroying work created on offline devices.
-2. **Untracked Duplicate Sprawl**: The server generates dozens of disconnected files (e.g., `Document (conflicted copy).docx`), forcing users to manually piece their work back together from scratch.
+When a user edits the same file across multiple devices—such as a laptop on office Wi-Fi and a smartphone in a subway tunnel without network coverage—standard naive synchronization systems frequently overwrite newer data or silently discard offline work.
 
-**SyncSafe** is an operational, fully verified multi-device synchronization engine created specifically for **PS-13: Google Drive – Same File, Multiple Devices**. Unlike theoretical proposals, SyncSafe is an active, fully implemented codebase featuring:
-- An **Express + TypeScript Synchronization Backend** backed by **SQLite with Write-Ahead Logging (WAL)** for strict ACID transactional serialization.
-- A **Server-Authoritative State Engine** that validates base versions, tracks append-only immutable historical versions with parent pointers, and prevents concurrent write corruption.
-- A **Field-Level 3-Way Auto-Merge Engine** that safely and automatically combines non-overlapping structured changes without requiring user intervention.
-- A **Conflict Preservation and Visual 3-Way Resolver** that retains base, server, and incoming states when edits overlap, offering users explicit choices (*Keep Server*, *Keep Mine*, or *Custom Merge*).
-- An **IndexedDB-Backed Durable Offline Queue** running in an interactive dual-device client simulator (**MacBook Pro** and **Google Pixel 8 Pro**), ensuring local edits survive tab closures and system reboots.
-- A **100% Verified Automated Acceptance Suite** validating all 16 test scenarios (`TC01`–`TC12` and `SEC01`–`SEC04`).
+SyncSafe solves this challenge through an architectural commitment: **"Never silently discard a user's change."** SyncSafe replaces blind overwrites with server-authoritative base-version validation, field-level 3-way automatic merging, durable client-side IndexedDB persistence, idempotent retry processing, and transparent 3-way visual conflict resolution.
 
-SyncSafe makes synchronization safety transparent, truthful, and verifiable.
+SyncSafe is a functioning full-stack application backed by **Express, TypeScript, SQLite WAL mode, React, Vite, and IndexedDB**, accompanied by a test suite of **16 automated scenarios passing with a 100% success rate**.
 
 ---
 
-## 2. Project Background & The Problem in Plain Language
+## 2. Problem Statement
 
-### 2.1 The Everyday Reality of Multi-Device Work
-Consider a typical professional workflow:
-- You open an engineering project proposal on your office **Laptop** connected to high-speed Wi-Fi.
-- You leave the office, board a subway with zero network reception, pull out your **Mobile Phone**, and update the project status and review notes.
-- Meanwhile, an automated build job or a quick update submitted from your laptop at the office pushes an update to the cloud.
-- When your phone regains cellular reception at the next station, both devices have edited the same document starting from the very same original version.
+**PS-13: Google Drive – Same File, Multiple Devices**
 
-### 2.2 Realistic Scenario 1: The Safe Non-Overlapping Edit
-Let us understand how a safe synchronization engine should behave:
-- **Starting Point**: A document starts at **Version 1**. Both Laptop and Phone hold an identical local copy of Version 1:
-  - `Title`: "Product Roadmap"
-  - `Status`: "draft"
-  - `Description`: "Initial scope notes"
-  - `Content`: "Sprint planning notes..."
-- **Laptop (Online)** edits the `Description` to: `"Updated Q4 scope notes"`. It uploads this change to the cloud server. The server verifies that the Laptop started from Version 1, accepts the change, and increments the document to **Version 2**.
-- **Phone (Offline)** edits the `Status` to: `"in_review"`. Because the phone is in an airplane or subway tunnel, it cannot immediately reach the server.
-- **The Reconnection Event**: When the phone regains connectivity, it sends its edit to the server with an explicit note: *"I modified the status to 'in_review', and my edit was based on Version 1."*
-- **The Intelligent Resolution**: The server notes that its current version is Version 2, but recognizes that the Phone's edit and the Laptop's edit modified **entirely different fields**.
-  - Laptop modified: `Description`
-  - Phone modified: `Status`
-  - Overlap: **None**
-- Instead of throwing an error or overwriting the Laptop's description, the server performs a **clean 3-way auto-merge**. It combines the Laptop's new description and the Phone's new status into **Version 3 (marked `auto_merged`)**. Both devices update to Version 3, and no work is lost.
+The prompt requires designing and implementing a multi-device synchronization engine where:
+> A user edits a document on a laptop while the same file is also open or being accessed on a phone or another device. The system must keep the file consistent across devices without losing any changes.
 
-### 2.3 Realistic Scenario 2: The Overlapping Edit (A True Conflict)
-Now consider what happens when changes collide:
-- Both devices again start from **Version 1**, where the `Content` reads: `"Launch scheduled for October 10th."`
-- The **Laptop (Online)** updates `Content` to: `"Launch postponed to November 1st due to QA review."` The server accepts this and creates **Version 2**.
-- The **Phone (Offline)** simultaneously updates `Content` to: `"Emergency launch brought forward to October 5th."`
-- When the Phone reconnects, it attempts to submit its content change based on Version 1.
-- **Why this cannot be automatically merged**: No algorithm can guess human business intent. If the server keeps the Laptop's content, the Phone's emergency schedule is discarded. If the server keeps the Phone's content, the QA postponement notice is erased.
-- **The SyncSafe Solution**: The server refuses to blindly overwrite. It preserves the incoming Phone edit, creates a **Conflict Record** containing the original Base, the current Server text, and the incoming Phone text, and surfaces a visual 3-way comparison to the user for explicit resolution.
+The problem requires addressing:
+* Multi-device synchronization and eventual consistency.
+* Append-only immutable version tracking.
+* Concurrency control and base-version validation.
+* Field-level automatic merging versus conflict detection.
+* Durable offline caching and queue persistence across restarts.
+* Safe reconnection and idempotent retry handling.
+* Complete prevention of silent data loss.
 
 ---
 
-## 3. The Core Principle of SyncSafe
+## 3. The Problem in Simple Terms
 
-The architectural cornerstone of SyncSafe is:
+### Simple Explanation
+When you edit a document on your phone while offline, your phone doesn't know that your laptop already made changes online, so saving your phone's file later can accidentally wipe out your laptop's work.
 
-> ### **Never silently discard a user's change.**
+### Technical Explanation
+When two devices diverge from a common ancestor version ($V_1$), each creates an independent branch of edits. If the server evaluates incoming writes purely by arrival timestamp or raw payload replacement, the device that syncs second will overwrite the intervening updates applied by the first device, resulting in an unrecoverable "lost update" anomaly.
 
-In naive systems, changes can vanish into a network void or be silently overwritten without the user ever being notified. In SyncSafe, **every single user edit is strictly guaranteed to end in one of five deterministic states**:
+### Concrete Example
+1. **Starting Point**: A document starts at **Version 1** (`status = "draft"`, `description = "Initial scope"`). Both Laptop and Phone hold local copies of Version 1.
+2. **Laptop Edit (Online)**: The laptop updates `description` to `"Updated Q4 scope"`. The server validates that the laptop started from Version 1, accepts the change, and increments the document to **Version 2**.
+3. **Phone Edit (Offline)**: The phone loses network connectivity and edits `status` to `"in_review"`. The phone is still working from its original base of Version 1.
+4. **Reconnection Risk**: When the phone reconnects, a naive server simply replaces the document with the phone's payload. The laptop's new description is erased.
 
+---
+
+## 4. Why Naive Synchronization Fails
+
+### Simple Explanation
+Blindly keeping the latest upload means whichever device uploads last destroys whatever was uploaded before it.
+
+### Technical Explanation
+Naive file synchronization relies on the **Last-Write-Wins (LWW)** pattern:
 ```text
-                                 [ User Edit Initiated ]
-                                            │
-                                            ▼
-                           [ State 3: Durable Offline Queue ]
-                         (Saved locally in IndexedDB; persists
-                           across page refreshes & reboots)
-                                            │
-                                  Network Available?
-                                   ├── No ───► Remains in Queue
-                                   └── Yes
-                                            │
-                                            ▼
-                               [ Server Base-Version Check ]
-                                            │
-                     ┌──────────────────────┴──────────────────────┐
-                     ▼                                             ▼
-        [ Base Version == Current ]                   [ Base Version < Current ]
-                     │                                             │
-                     ▼                                             ▼
-        [ State 1: Server Accepted ]                   [ 3-Way Merge Evaluation ]
-        (Atomic version increment;                                 │
-          persisted to SQLite WAL)                 ┌───────────────┴───────────────┐
-                                                   ▼                               ▼
-                                       [ Non-Overlapping Fields ]      [ Overlapping Fields ]
-                                                   │                               │
-                                                   ▼                               ▼
-                                        [ State 2: Safely Merged ]    [ State 4: Preserved Conflict ]
-                                       (Combined into auto_merged      (Retained in conflicts table;
-                                          immutable version)             neither branch discarded)
-                                                                                   │
-                                                                                   ▼
-                                                                     [ State 5: Explicitly Resolved ]
-                                                                      (User reviews 3-way diff;
-                                                                        creates manual_resolution V)
-```
-
-1. **Successfully Accepted**: The base version matched the server's current version, and the change was atomically committed as the next immutable version.
-2. **Safely Merged**: The base version was stale, but field analysis proved zero collision; changes were automatically unified into a new version.
-3. **Durable in Pending Queue**: The device is offline or the network timed out; edits are held in persistent client storage and will retry upon reconnect.
-4. **Preserved as a Conflict**: The base version was stale and edits collided; both versions are immutably preserved on the server without data loss.
-5. **Explicitly Resolved**: The user selected or synthesized the winning state, generating a new traceable version that converges all devices.
-
----
-
-## 4. Existing Industry Solutions: A Comparative Analysis
-
-To evaluate SyncSafe objectively, we examine how commercial platforms address multi-device synchronization.
-
-| Platform / Approach | Primary Problem Solved | Synchronization Model | Version History | Offline Handling | Conflict Handling | Limitations & Trade-offs |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Google Drive (Backup & Sync / Stream)** | Cloud storage, multi-device backup, file streaming | Chunk-level and block-level background file upload | Linear cloud version history (e.g., 30-day retention) | Local folder synchronization via virtual drive caching | Creates separate duplicate files: `File (conflicted copy)` | Manual user cleanup required; file sprawl; binary files cannot auto-merge |
-| **Microsoft OneDrive** | Deep Windows/Office integration, enterprise cloud sync | Differential synchronization (uploading modified blocks) | Office file version history with cloud restore points | Local disk mirror with "Files On-Demand" storage | Automatic merge for Office OOXML format; conflicted file copies for other types | Specialized merging works primarily on proprietary Office formats |
-| **Dropbox** | High-performance cross-platform file synchronization | Block-level sync (4MB blocks) with rolling checksums | Append-only snapshot ledger with rollback | Local selective sync folder caching | Emits `[Filename] (Conflicted Copy [Date])` | Branching files require manual folder reconciliation |
-| **Collaborative Docs (Google Docs / Figma)** | Real-time concurrent character-by-character editing | Operational Transformation (OT) or Conflict-Free Replicated Data Types (CRDT) | Continuous keystroke revision history | In-memory web worker caching; limited offline editing capabilities | Algorithmic convergence (intent preservation via transform matrices) | Heavy network chatter; high memory footprint; ill-suited for general file storage |
-
-> **SyncSafe's Scope Boundary**: SyncSafe does not claim to duplicate the multi-billion-dollar global infrastructure, petabyte block-level chunking, or private proprietary algorithms of Google Drive or Dropbox. Instead, SyncSafe provides a **transparent, correctness-focused, open synchronization engine** that proves how structured file updates can be synchronized, merged, and resolved without silent data loss.
-
----
-
-## 5. The Fundamental Problem With Naive Synchronization
-
-Why is naive file synchronization so pervasive, and why is it dangerous? Most basic web applications and custom file servers implement synchronization using a simplistic "Upload & Overwrite" pattern:
-
-```text
-[ Device A (Laptop) ] ────────── Uploads File (V1) ──────────► [ Server Storage ]
-                                                                      │
-[ Device B (Phone) ]  ─── Goes Offline with V1 copy                   │
-                                                                      ▼
-[ Device A (Laptop) ] ────────── Uploads Edit (V2) ──────────► [ Server Storage ]
-                                                               (Server holds V2)
-                                                                      │
-[ Device B (Phone) ]  ─── Reconnects; uploads local V1 edit ──────────┘
+Device A (Laptop) ─── Uploads Edit (V2) ──────────► Server (Saves V2)
+                                                         │
+Device B (Phone)  ─── Reconnects; uploads V1 edit ───────┘
                                 │
                                 ▼
-        [ NAIVE SERVER BLINDLY SAVES LATEST INCOMING PAYLOAD ]
+         Server blindly overwrites V2 with B's V1 edit
                                 │
                                 ▼
-           Laptop's V2 is SILENTLY OVERWRITTEN and DESTROYED!
+            Device A's changes SILENTLY DISAPPEAR
 ```
 
-### Why Last-Write-Wins (LWW) Fails for Document Content
-1. **Clock Skew & Wall-Clock Deception**: Physical device clocks drift. Even with NTP synchronization, network packet latency means that the physical arrival time at the server does not reflect the user's actual logical intent.
-2. **The "Silent Eraser" Effect**: A user on a laptop might spend three hours drafting complex architectural specifications. A user on a phone might open the app while offline simply to fix a single typo in the title. When the phone connects, an LWW system replaces the entire three hours of laptop engineering work with the phone's single typo correction.
-3. **No Auditability**: Once an in-place overwrite occurs, there is no digital paper trail to recover the overwritten state or explain why the document changed.
+### Why Last-Write-Wins Fails:
+1. **Clock Skew**: Device system clocks drift; network transit latency makes physical arrival order arbitrary and disconnected from logical user intent.
+2. **The "Silent Eraser" Effect**: A phone user fixing a single punctuation mark offline will overwrite thousands of words written on a laptop if their upload arrives second.
+3. **No Audit Trail**: Direct record overwrites destroy the previous state, making data recovery impossible.
 
-**SyncSafe's Verdict**: Blind Last-Write-Wins is completely unacceptable for user document content.
+**SyncSafe does not use blind Last-Write-Wins for document content.**
 
 ---
 
-## 6. The SyncSafe Solution Architecture
+## 5. Existing Solution Landscape
 
-SyncSafe replaces naive overwrites with a deterministic, ten-stage end-to-end synchronization pipeline:
+Commercial cloud platforms address multi-device synchronization through various engineering trade-offs. At a high level:
+
+* **Google Drive (Backup & Sync / Stream)**: Synchronizes files and block updates between local filesystems and cloud storage. When conflicting edits occur on general files, it typically generates duplicate conflicted copy files (e.g., `Document (conflicted copy)`), requiring users to manually compare files.
+* **Microsoft OneDrive**: Uses differential synchronization to upload modified blocks. It supports automatic merging on structured Office document formats (OOXML), while falling back to conflicted copies on generic files.
+* **Dropbox**: Utilizes block-level streaming with rolling checksums. On collision, it creates an append-only snapshot ledger and produces a `[Filename] (Conflicted Copy)` file.
+* **Collaborative Document Editors (Google Docs / Figma)**: Focus on continuous real-time co-authoring using Operational Transformation (OT) or Conflict-Free Replicated Data Types (CRDT), transforming individual keystrokes in active memory.
+
+> **SyncSafe's Scope**: SyncSafe does not claim to duplicate the planetary infrastructure or private internal algorithms of Google Drive or Dropbox. SyncSafe is a focused, working prototype demonstrating synchronization correctness, offline durability, versioning, conflict detection, and transparent resolution for structured documents.
+
+---
+
+## 6. The SyncSafe Solution
+
+### Simple Explanation
+SyncSafe checks what version you started with, combines edits automatically if they don't touch the same field, and stops to ask you if edits collide—never throwing away work.
+
+### Technical Explanation
+SyncSafe enforces a structured ten-stage synchronization lifecycle:
 
 ```text
-[ Step 1: User Edit ]
-        │ User alters Title, Status, Description, or Content in the client UI
-        ▼
-[ Step 2: Local Cache ]
-        │ Edit is immediately updated in the device's local memory and cache
-        ▼
-[ Step 3: Create Change ]
-        │ A unique UUID v4 changeId is generated once with the known baseVersion
-        ▼
-[ Step 4: Durable Pending Queue ]
-        │ Written to device-isolated IndexedDB BEFORE network transmission
-        ▼
-[ Step 5: Send Change + Base Version ]
-        │ Client attempts HTTP POST /api/documents/:id/changes with Bearer JWT
-        ▼
-[ Step 6: Server Validation & Security ]
-        │ Identity extracted from verified JWT; document ownership checked (SEC01, SEC02)
-        ▼
-[ Step 7: Base Version Check ]
-        │ SQLite transaction checks if submitted baseVersion matches current_version
-        ▼
-[ Step 8: 3-Way Merge or Conflict Engine ]
-        │ If base is stale, computes field deltas; auto-merges or preserves conflict
-        ▼
-[ Step 9: Create Immutable Version ]
-        │ New row inserted into versions table; document current_version pointer updated
-        ▼
-[ Step 10: Server Acknowledgement & Queue Removal ]
-        │ Server returns accepted outcome; client removes changeId from IndexedDB
+User Edit
+   ↓
+Local Cache (Memory)
+   ↓
+Create Change (Generate UUID v4 changeId + Attach baseVersion)
+   ↓
+Durable Pending Queue (Persisted in IndexedDB before network call)
+   ↓
+Send Change to Server (HTTP POST with Bearer JWT)
+   ↓
+JWT Authentication + Ownership Validation
+   ↓
+Server Base-Version Verification (Inside SQLite Transaction)
+   ↓
+Is baseVersion Current?
+   ├── YES (baseVersion == currentVersion) ──► Direct Accept & Increment
+   │
+   └── NO  (baseVersion < currentVersion)  ──► 3-Way Field Analysis
+               ├── Non-overlapping fields ──► Auto-Merge (auto_merged V)
+               └── Overlapping fields     ──► Conflict Preservation
+                                                     ↓
+                                              User Resolution Modal
+                                                     ↓
+                                              manual_resolution V
+   ↓
+Create Immutable Version Record
+   ↓
+Server Acknowledgement
+   ↓
+Remove Queue Item from Client IndexedDB
+   ↓
+Connected Devices Synchronize & Converge
 ```
 
 ---
 
-## 7. Database Schema & Data Model Design
+## 7. Core Design Principle
 
-SyncSafe’s backend utilizes **SQLite with Write-Ahead Logging (WAL)** to ensure complete ACID transaction guarantees, immediate crash recovery, and high concurrency. The schema consists of six relational tables:
+The primary principle of SyncSafe is:
+
+> ### **"Never silently discard a user's change."**
+
+Every user edit submitted to or stored within SyncSafe must terminate in exactly one of five deterministic states:
+
+| Outcome State | Description |
+| :--- | :--- |
+| **1. Accepted Normally** | The base version matched the current server version; committed atomically as the next sequential version. |
+| **2. Safely Auto-Merged** | The base version was stale, but the modified fields were disjoint from intervening server edits; combined automatically into an `auto_merged` version. |
+| **3. Stored in Offline Queue** | The device is disconnected or the network request timed out; edits remain durably preserved in client IndexedDB. |
+| **4. Preserved as a Conflict** | Edits modified the same field differently; both branches are immutably stored in the server's `conflicts` table without overwriting the document. |
+| **5. Explicitly Resolved** | The user inspected the 3-way diff (*Base*, *Server*, *Incoming*) and submitted a resolution, creating a `manual_resolution` version. |
+
+---
+
+## 8. System Architecture
+
+The SyncSafe architecture consists of a client layer with isolated device storage, a stateless sync engine, and an ACID-compliant transactional persistence layer:
+
+```text
+┌────────────────────────────────────────────────────────┐
+│                   Dual-Device Web UI                   │
+│                                                        │
+│   ┌───────────────────────┐   ┌────────────────────┐   │
+│   │  Laptop Simulator     │   │  Phone Simulator   │   │
+│   │  - IndexedDB Cache    │   │  - IndexedDB Cache │   │
+│   │  - Pending Queue      │   │  - Pending Queue   │   │
+│   │  - Offline Toggle     │   │  - Offline Toggle  │   │
+│   └───────────┬───────────┘   └─────────┬──────────┘   │
+└───────────────┼─────────────────────────┼──────────────┘
+                │ HTTP / REST + Bearer JWT│ HTTP / REST + Bearer JWT
+                ▼                         ▼
+┌────────────────────────────────────────────────────────┐
+│          Express + TypeScript Sync Engine              │
+│                                                        │
+│   - JWT Authentication & Server-Verified Identity      │
+│   - Document Ownership Validation                      │
+│   - Zod Payload Schema & Size Validation (SEC04)       │
+│   - Idempotency & Duplicate Change Filter (TC08, TC09) │
+│   - Transactional Concurrency Control (SEC03)          │
+│   - Base-Version Verification Engine                   │
+│   - Field-Level 3-Way Auto-Merge Engine (TC06)         │
+│   - Conflict Preservation & Resolution Engine (TC07)   │
+└───────────────────────────┬────────────────────────────┘
+                            │ SQLite Transaction (WAL Mode)
+                            ▼
+┌────────────────────────────────────────────────────────┐
+│              SQLite WAL / ACID Storage                 │
+│                                                        │
+│  users     ──< devices                                 │
+│  documents ──< versions (Immutable Append-Only Log)    │
+│  changes   ──< conflicts (Preserved 3-Way Snapshots)   │
+└────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 9. End-to-End Workflow
+
+### Step-by-Step Walkthrough
+
+1. **User Edit**: The user changes a document property (Title, Status, Description, or Content) in the client interface.
+2. **Local Cache Update**: The edit is updated in the browser's local memory for instant UI responsiveness.
+3. **Change Generation**: A permanent UUID v4 `changeId` is generated, and the document's current known `baseVersion` is recorded.
+4. **Durable Queue Enqueue**: Before any network call is attempted, the change object is committed to the device's **IndexedDB** `pending_queue`.
+5. **Network Transmission**: The `ClientSyncCoordinator` attempts an HTTP POST request to `/api/documents/:id/changes`.
+6. **Authentication & Ownership**: The Express server validates the JWT header, extracts the verified `userId`, and confirms document ownership (`SEC01`, `SEC02`).
+7. **Concurrency-Locked Version Check**: Inside a SQLite immediate write transaction, the server reads `documents.current_version`.
+8. **Branching Evaluation**:
+   - If `baseVersion == current_version`: The change is accepted directly.
+   - If `baseVersion < current_version`: The server executes 3-way merge logic against the base snapshot.
+9. **Immutable Version Creation**: An immutable row is inserted into `versions`, and `documents.current_version` is incremented.
+10. **Server Acknowledgement**: The server returns `{ status: 'accepted', version: newVersion }`.
+11. **Queue Removal**: Upon receiving acknowledgement, the client deletes the item from IndexedDB.
+12. **Device Convergence**: Connected devices fetch the new authoritative version and converge.
+
+---
+
+## 10. Database Architecture
+
+SyncSafe's relational database runs on **SQLite with Write-Ahead Logging (WAL)**.
 
 ```
-┌─────────────────┐       ┌─────────────────┐
-│      users      │◄──────┤     devices     │
-└────────┬────────┘       └─────────────────┘
-         │
+┌──────────────────┐        ┌──────────────────┐
+│      users       │◄───────┤     devices      │
+└────────┬─────────┘        └──────────────────┘
          │ 1:N
          ▼
-┌─────────────────┐       ┌─────────────────┐
-│    documents    │◄──────┤     changes     │
-└────────┬────────┘       └────────┬────────┘
-         │                         │
-         ├─────────────────────────┤
-         │ 1:N                     │ 1:1
-         ▼                         ▼
-┌─────────────────┐       ┌─────────────────┐
-│    versions     │       │    conflicts    │
-└─────────────────┘       └─────────────────┘
+┌──────────────────┐        ┌──────────────────┐
+│    documents     │◄───────┤     changes      │
+└────────┬─────────┘        └────────┬─────────┘
+         │ 1:N                       │ 1:1
+         ▼                           ▼
+┌──────────────────┐        ┌──────────────────┐
+│     versions     │        │    conflicts     │
+└──────────────────┘        └──────────────────┘
 ```
 
-### 7.1 Table: `users`
-Stores user identities and cryptographically hashed credentials.
-```sql
-CREATE TABLE users (
-  id TEXT PRIMARY KEY,               -- UUID v4
-  email TEXT UNIQUE NOT NULL,        -- Lowercase unique email address
-  password_hash TEXT NOT NULL,       -- Bcrypt salt + hash (10 rounds)
-  name TEXT NOT NULL,                -- User display name
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-```
+### 10.1 Table Specifications
 
-### 7.2 Table: `devices`
-Tracks registered hardware devices and client platforms per user.
-```sql
-CREATE TABLE devices (
-  id TEXT PRIMARY KEY,               -- Stable device identifier (e.g. device-laptop-001)
-  user_id TEXT NOT NULL,             -- Foreign key to users(id)
-  device_name TEXT NOT NULL,         -- Human-readable name (e.g. MacBook Pro 16")
-  platform TEXT NOT NULL,            -- 'web-laptop' | 'mobile-pwa'
-  last_seen DATETIME DEFAULT CURRENT_TIMESTAMP,
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-);
-```
+#### `users`
+* **Purpose**: Stores authenticated user accounts.
+* **Fields**: `id` (UUID PK), `email` (UNIQUE), `password_hash` (Bcrypt), `name`, `created_at`.
+* **Why Needed**: Enforces identity and document ownership boundaries.
 
-### 7.3 Table: `documents`
-The server-authoritative live pointer for documents.
-```sql
-CREATE TABLE documents (
-  id TEXT PRIMARY KEY,               -- UUID v4
-  owner_id TEXT NOT NULL,            -- Foreign key to users(id)
-  name TEXT NOT NULL,                -- Document title / file name
-  current_version INTEGER NOT NULL DEFAULT 1, -- Current authoritative version
-  title TEXT NOT NULL,               -- Structured field: Title
-  status TEXT NOT NULL DEFAULT 'draft', -- Structured field: draft|in_review|approved|archived
-  description TEXT NOT NULL DEFAULT '', -- Structured field: Description
-  content TEXT NOT NULL DEFAULT '',     -- Structured field: Text/Markdown Content
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE
-);
-```
+#### `devices`
+* **Purpose**: Tracks registered hardware and client platforms.
+* **Fields**: `id` (PK, e.g. `device-laptop-001`), `user_id` (FK), `device_name`, `platform`, `last_seen`, `created_at`.
+* **Why Needed**: Distinguishes which physical or simulated device authored specific changes.
 
-### 7.4 Table: `versions`
-Append-only immutable historical log of every document state.
-```sql
-CREATE TABLE versions (
-  id TEXT PRIMARY KEY,               -- UUID v4
-  document_id TEXT NOT NULL,         -- Foreign key to documents(id)
-  version_number INTEGER NOT NULL,   -- Sequential version number (1, 2, 3...)
-  parent_version INTEGER NOT NULL,   -- Preceding version number
-  title TEXT NOT NULL,
-  status TEXT NOT NULL,
-  description TEXT NOT NULL,
-  content TEXT NOT NULL,
-  device_id TEXT NOT NULL,           -- Device that authored this version
-  change_id TEXT NOT NULL,           -- Unique change identifier
-  created_by TEXT NOT NULL,          -- User who authored this version
-  merge_type TEXT NOT NULL DEFAULT 'direct', -- 'direct' | 'auto_merged' | 'manual_resolution'
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE(document_id, version_number),
-  FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE,
-  FOREIGN KEY (created_by) REFERENCES users(id)
-);
-```
+#### `documents`
+* **Purpose**: Maintains the authoritative current-version pointer and live document fields.
+* **Fields**: `id` (UUID PK), `owner_id` (FK), `name`, `current_version` (INT), `title`, `status`, `description`, `content`, `created_at`, `updated_at`.
+* **Why Needed**: Serves as the single source of truth for the latest accepted state.
 
-### 7.5 Table: `changes`
-Deduplication and idempotency ledger.
-```sql
-CREATE TABLE changes (
-  change_id TEXT PRIMARY KEY,        -- Client-generated UUID v4
-  document_id TEXT NOT NULL,         -- Target document
-  device_id TEXT NOT NULL,           -- Originating device
-  base_version INTEGER NOT NULL,     -- The version the client based this edit on
-  payload_json TEXT NOT NULL,        -- JSON string of changed fields
-  status TEXT NOT NULL,              -- 'accepted' | 'conflict' | 'rejected'
-  result_version INTEGER,            -- Version number produced (if accepted)
-  processed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE
-);
-```
+#### `versions`
+* **Purpose**: Append-only immutable log of every historical document revision.
+* **Fields**: `id` (UUID PK), `document_id` (FK), `version_number` (INT), `parent_version` (INT), `title`, `status`, `description`, `content`, `device_id`, `change_id`, `created_by` (FK), `merge_type` (`'direct' | 'auto_merged' | 'manual_resolution'`), `created_at`.
+* **Constraint**: `UNIQUE(document_id, version_number)`.
+* **Why Needed**: Provides an immutable audit trail and historical snapshots for 3-way merge comparisons.
 
-### 7.6 Table: `conflicts`
-Preserved conflicting branches pending user resolution.
-```sql
-CREATE TABLE conflicts (
-  id TEXT PRIMARY KEY,               -- UUID v4
-  document_id TEXT NOT NULL,         -- Target document
-  incoming_change_id TEXT NOT NULL,  -- Change that triggered conflict
-  base_version INTEGER NOT NULL,     -- Original common ancestor version
-  server_version INTEGER NOT NULL,   -- Server version at time of conflict
-  conflicting_fields_json TEXT NOT NULL, -- Array of conflicting field keys (e.g. ["content"])
-  server_state_json TEXT NOT NULL,   -- Complete JSON snapshot of server fields
-  incoming_state_json TEXT NOT NULL, -- Complete JSON snapshot of incoming client fields
-  base_state_json TEXT NOT NULL,     -- Complete JSON snapshot of base ancestor fields
-  status TEXT NOT NULL DEFAULT 'open', -- 'open' | 'resolved'
-  resolution_version INTEGER,        -- Resulting version when resolved
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE,
-  FOREIGN KEY (incoming_change_id) REFERENCES changes(change_id)
-);
-```
+#### `changes`
+* **Purpose**: Idempotency ledger and deduplication filter.
+* **Fields**: `change_id` (UUID PK), `document_id` (FK), `device_id`, `base_version` (INT), `payload_json`, `status` (`'accepted' | 'conflict' | 'rejected'`), `result_version` (INT), `processed_at`.
+* **Why Needed**: Detects duplicate retries from dropped networks and prevents duplicate versions.
+
+#### `conflicts`
+* **Purpose**: Stores conflicting branches that require human review.
+* **Fields**: `id` (UUID PK), `document_id` (FK), `incoming_change_id` (FK), `base_version` (INT), `server_version` (INT), `conflicting_fields_json`, `server_state_json`, `incoming_state_json`, `base_state_json`, `status` (`'open' | 'resolved'`), `resolution_version`, `created_at`.
+* **Why Needed**: Preserves both sides of a collision without silent data loss.
 
 ---
 
-## 8. Immutable Versioning Architecture
+## 11. Immutable Versioning System
 
-Versioning in SyncSafe is **append-only and immutable**. Once a version row is written to the `versions` table, it is never modified or deleted.
+### Simple Explanation
+SyncSafe never erases old drafts; every save adds a new numbered page to an unchangeable historical ledger.
+
+### Technical Explanation
+Every successful edit, auto-merge, or manual conflict resolution inserts an immutable row into the `versions` table. Version numbers are strictly monotonically increasing integers ($1, 2, 3\dots$). Intermediate versions are never overwritten or deleted.
 
 ```text
-Version 1 (Initial seed, parent = 0)
-    │
-    ▼
-Version 2 (Laptop title update, parent = 1, merge_type = 'direct')
-    │
-    ▼
-Version 3 (Laptop description update, parent = 2, merge_type = 'direct')
-    │
-    ▼
-Version 4 (Phone status auto-merged, parent = 3, merge_type = 'auto_merged')
-    │
-    ▼
-Version 5 (User manual resolution, parent = 4, merge_type = 'manual_resolution')
+Version 1 (Initial Document, parent = 0)
+   ↓
+Version 2 (Laptop Title Edit, parent = 1, merge_type = 'direct')
+   ↓
+Version 3 (Laptop Description Edit, parent = 2, merge_type = 'direct')
+   ↓
+Version 4 (Phone Status Auto-Merge, parent = 3, merge_type = 'auto_merged')
+   ↓
+Version 5 (Laptop Content Edit, parent = 4, merge_type = 'direct')
+   ↓
+Version 6 (Conflict Resolution, parent = 5, merge_type = 'manual_resolution')
 ```
 
-### Why Restoring a Version Must Create a New Version
-In naive systems, "reverting" to Version 1 often deletes intermediate records (Versions 2, 3, 4). In SyncSafe, **history cannot be rewritten**. Restoring Version 1 creates **Version 6**, which copies the contents of Version 1 while referencing Version 5 as its parent. This guarantees:
-- Every action is auditable.
-- Rollbacks themselves can be rolled back without data loss.
+### Why Restoring a Version Creates a New Version
+If a user chooses to restore Version 1:
+- The system **does not** delete Versions 2 through 6.
+- The system reads Version 1's fields and creates **Version 7** with `parent_version = 6`.
+- **Value**: Guaranteed auditability, non-destructive rollbacks, and complete user trust.
 
 ---
 
-## 9. Base-Version Concurrency Control
+## 12. Base-Version Concurrency Control
 
-Every update request submitted by a client must supply a `baseVersion`. The server uses this base version to determine whether the client was working with current or outdated knowledge:
+### Simple Explanation
+Before saving your work, the server checks if you started from the latest version; if someone else saved first, the server stops to check what changed instead of overwriting.
 
-```text
-Laptop holds Version 5
-Phone  holds Version 5
-
-1. Laptop submits change (baseVersion: 5)
-   └── Server checks: doc.current_version == 5? YES.
-   └── Server increments doc.current_version to 6.
-   └── Creates Version 6 in versions table.
-
-2. Phone submits change (baseVersion: 5)
-   └── Server checks: doc.current_version == 5? NO (current is 6).
-   └── Server detects Phone's edit is STALE.
-   └── Server immediately branches to 3-Way Merge / Conflict Analysis.
+### Technical Explanation
+Every write request submitted by a client includes its known `baseVersion`:
+```typescript
+interface SubmitChangeRequest {
+  changeId: string;
+  deviceId: string;
+  baseVersion: number;
+  payload: Partial<DocumentStructuredFields>;
+}
 ```
 
-The server **never** overwrites Version 6. It treats a version mismatch as an advisory signal to compare changes against the common ancestor.
+The server compares `req.baseVersion` against `document.current_version`:
+1. **Current Base (`baseVersion == current_version`)**: Direct accept. Document increments to `current_version + 1`.
+2. **Stale Base (`baseVersion < current_version`)**: The client was editing an outdated revision. The server branches to the 3-Way Merge Engine.
+3. **Invalid Future Base (`baseVersion > current_version`)**: Rejected immediately with HTTP 400.
+
+> **Key Rule**: A stale update is never treated as permission to overwrite newer server state.
 
 ---
 
-## 10. Field-Level 3-Way Auto-Merge Engine
+## 13. Field-Level 3-Way Auto-Merge Engine
 
-When an incoming change has a stale `baseVersion < current_version`, SyncSafe retrieves the common ancestor snapshot from the `versions` table and performs a **3-Way Field Analysis**:
+### Simple Explanation
+If two people edit different parts of the same file (like one changing the title and another changing the status), the system automatically combines both edits safely.
 
-```text
-           [ BASE VERSION SNAPSHOT ] (Ancestor V1)
-                     /           \
-                    /             \
-                   ▼               ▼
-      [ SERVER CURRENT (V2) ]    [ INCOMING CLIENT EDIT ]
-```
+### Technical Explanation
+When an incoming update has a stale base version, the server retrieves the ancestor snapshot ($V_{\text{base}}$) and evaluates three distinct states:
+1. **Base State ($S_{\text{base}}$)**: The document snapshot at `baseVersion`.
+2. **Server State ($S_{\text{server}}$)**: The document's current live state at `current_version`.
+3. **Incoming State ($S_{\text{incoming}}$)**: The client's proposed state formed by applying `req.payload` onto $S_{\text{base}}$.
 
-### Concrete Example of Safe Automatic Merge
-Consider structured fields: `title`, `status`, `description`, `content`.
+The engine analyzes the supported structured fields (`title`, `status`, `description`, `content`):
+$$\Delta_{\text{client}} = \{ f \in \text{Fields} \mid S_{\text{incoming}}[f] \neq S_{\text{base}}[f] \}$$
+$$\Delta_{\text{server}} = \{ f \in \text{Fields} \mid S_{\text{server}}[f] \neq S_{\text{base}}[f] \}$$
+$$\text{Collisions} = \{ f \in (\Delta_{\text{client}} \cap \Delta_{\text{server}}) \mid S_{\text{incoming}}[f] \neq S_{\text{server}}[f] \}$$
 
+### Concrete Example of Auto-Merge (`TC06`)
 ```text
 BASE (V1):
-  title:       "SyncSafe Blueprint"
-  status:      "draft"
-  description: "Initial specification"
-  content:     "# System Overview"
+  Status:      "draft"
+  Description: "Initial requirements"
 
-SERVER CURRENT (V2) — Laptop updated Description:
-  title:       "SyncSafe Blueprint"
-  status:      "draft"
-  description: "Updated Q4 scope notes"   <-- CHANGED BY SERVER
-  content:     "# System Overview"
+SERVER (V2) [Laptop updated Description]:
+  Status:      "draft"
+  Description: "Updated Q4 scope"         <-- Server Delta: ['description']
 
-INCOMING CHANGE — Phone updated Status while offline:
-  title:       "SyncSafe Blueprint"
-  status:      "in_review"                 <-- CHANGED BY CLIENT
-  description: "Initial specification"
-  content:     "# System Overview"
+INCOMING (V1 Base) [Phone updated Status]:
+  Status:      "in_review"                 <-- Client Delta: ['status']
+  Description: "Initial requirements"
 ```
-
-1. **Client Delta Calculation**:  
-   Client modified fields: `['status']` (since `status` differs from Base).
-2. **Server Delta Calculation**:  
-   Server modified fields: `['description']` (since `description` differs from Base).
-3. **Collision Detection**:  
-   Intersect Client Delta with Server Delta:
-   $$\text{ClientDelta} \cap \text{ServerDelta} = \emptyset$$
-4. **Resolution Outcome**:  
-   Because the set intersection is empty, the changes are **disjoint**. The server safely overlays the Client's `status` onto the Server's current state, increments the document to **Version 3**, writes the version with `merge_type = 'auto_merged'`, and acknowledges success (`TC06`).
+* **Evaluation**: $\Delta_{\text{client}} \cap \Delta_{\text{server}} = \emptyset$.
+* **Action**: Safe disjoint union. The server overlays the incoming `status` onto the server's state.
+* **Result**: `status = "in_review"`, `description = "Updated Q4 scope"`.
+* **Output**: **Version 3** is created with `merge_type = 'auto_merged'`.
 
 ---
 
-## 11. Conflict Detection & State Preservation
+## 14. Conflict Detection & State Preservation
 
-What happens when both devices modify the exact same field differently?
+### Simple Explanation
+When two devices change the exact same sentence or field in different ways, the system refuses to guess which one is right and saves both versions for the user to review.
 
+### Technical Explanation
+When $\text{Collisions} \neq \emptyset$, an unresolvable semantic conflict exists.
+
+### Concrete Example of Collision (`TC07`)
 ```text
 BASE (V1):
-  content: "Launch scheduled for October 10th."
+  Content: "Launch on Monday"
 
-SERVER CURRENT (V2) — Laptop edited Content:
-  content: "Launch postponed to November 1st due to QA review."
+SERVER (V2) [Laptop online edit]:
+  Content: "Launch postponed to Friday"
 
-INCOMING CHANGE — Phone edited Content while offline:
-  content: "Emergency launch brought forward to October 5th."
+INCOMING (V1 Base) [Phone offline edit]:
+  Content: "Emergency launch on Wednesday"
 ```
-
-1. **Collision Analysis**:
-   $$\text{ClientDelta} = [\text{'content'}], \quad \text{ServerDelta} = [\text{'content'}]$$
-   $$\text{ClientDelta} \cap \text{ServerDelta} = [\text{'content'}]$$
-   $$\text{Incoming['content']} \neq \text{Server['content']}$$
-2. **Server Action**:
-   - The server detects an unresolvable semantic collision.
-   - It **refuses** to overwrite the document.
-   - It marks the incoming change in `changes` as `status = 'conflict'`.
-   - It inserts a record into `conflicts` holding full JSON snapshots of `base_state`, `server_state`, and `incoming_state` (`TC07`).
-   - It returns `{ status: 'conflict', conflictId, conflictingFields: ['content'] }` to the client.
-
-Neither branch of work is discarded.
+* **Collision**: Both devices modified `content` differently.
+* **Server Action**:
+  1. The server **refuses** to overwrite the document.
+  2. The incoming change is recorded in `changes` with `status = 'conflict'`.
+  3. A new row is inserted into `conflicts` preserving full JSON snapshots of `base_state`, `server_state`, and `incoming_state`.
+  4. Returns HTTP 200 `{ status: 'conflict', conflictId, conflictingFields: ['content'] }`.
 
 ---
 
-## 12. Transparent Conflict Resolution Workflow
+## 15. Conflict Resolution Workflow
 
-When a conflict exists, the client surfaces the **Conflict Resolver Modal**, which displays a side-by-side visual diff of all three branches:
+### Simple Explanation
+The user is shown a clear 3-way comparison screen and chooses whether to keep the server's version, keep their device's version, or combine both in a text box.
+
+### Technical Explanation
+When a conflict is detected, the UI displays the **Conflict Resolver Modal**:
 
 ```text
 ┌─────────────────────────┬─────────────────────────┬─────────────────────────┐
 │     BASE VERSION 1      │    SERVER VERSION 2     │    MY OFFLINE CHANGE    │
 ├─────────────────────────┼─────────────────────────┼─────────────────────────┤
-│ Title: SyncSafe Specs   │ Title: SyncSafe Specs   │ Title: SyncSafe Specs   │
-│ Status: [draft]         │ Status: [in_review]     │ Status: [draft]         │
+│ Title: Project Roadmap  │ Title: Project Roadmap  │ Title: Project Roadmap  │
+│ Status: [draft]         │ Status: [draft]         │ Status: [draft]         │
 │ Content:                │ Content:                │ Content:                │
-│ "Launch Oct 10th"       │ "Postponed to Nov 1st"  │ "Emergency Oct 5th"     │
+│ "Launch on Monday"      │ "Postponed to Friday"   │ "Emergency on Wednesday"│
 └─────────────────────────┴─────────────────────────┴─────────────────────────┘
 ```
 
-The user is given three clear resolution paths:
-1. **Keep Server Version**: Adopt the server's current state as authoritative.
-2. **Keep My Offline Change**: Adopt the incoming device's edits over the server.
-3. **Custom Field-by-Field Merge**: Use an interactive editor to combine both texts (e.g., merging both notices into a unified release statement).
+The user selects one of three resolution options:
+1. **Keep Server**: Adopts server state.
+2. **Keep Mine**: Adopts incoming device state.
+3. **Custom Merge**: An interactive editor allowing the user to combine both edits (e.g. `"Launch Wednesday for Beta, Friday for General Availability"`).
 
-Submitting the resolution calls `POST /api/documents/:id/resolve`. The server updates the conflict record to `status = 'resolved'`, increments the document to **Version 3**, marks the version as `manual_resolution`, and broadcasts the new state. Both devices immediately converge to Version 3 (`TC12`).
-
----
-
-## 13. Durable Client-Side Offline Storage (IndexedDB)
-
-A critical flaw in many web prototypes is relying solely on browser memory (`useState`) or `localStorage` for offline queues. If the user refreshes the browser, closes the tab, or the laptop runs out of battery, all pending offline work is lost.
-
-SyncSafe implements a true **IndexedDB Durable Storage Engine** using the `idb` library. Each simulated client operates in an isolated IndexedDB database:
-- Laptop Database: `syncsafe_db_device-laptop-001`
-- Mobile Database: `syncsafe_db_device-mobile-002`
-
-Each database maintains two persistent object stores:
-1. `cached_documents`: Holds the local document snapshot, the last confirmed server version number, and local edit flags.
-2. `pending_queue`: An append-only queue holding:
-   - `changeId` (UUID v4)
-   - `documentId`
-   - `deviceId`
-   - `baseVersion`
-   - `payload` (JSON patch)
-   - `timestamp`
-   - `status` (`'pending' | 'in_flight' | 'conflict'`)
-   - `retryCount`
-   - `lastError`
-
-**Offline Survival Proof (`TC03`, `TC10`)**: If a user edits offline and closes the application or restarts the device, reopening the app loads the exact pending queue from IndexedDB and resumes synchronization automatically upon reconnect.
+Submitting calls `POST /api/documents/:id/resolve`:
+- The server updates the conflict record to `status = 'resolved'`.
+- A new version is created with `merge_type = 'manual_resolution'`.
+- All devices receive the authoritative resolved version and converge (`TC12`).
 
 ---
 
-## 14. Offline Workflow, Reconnection & Bounded Retry
+## 16. Durable Offline Synchronization (IndexedDB)
 
-```text
-[ Online State ]
-  ├── User types in editor.
-  ├── Local IndexedDB cache updated.
-  ├── Change record enqueued to IndexedDB pending_queue.
-  └── ClientSyncCoordinator transmits change immediately.
+### Simple Explanation
+If your internet cuts out while typing, your edits are saved to your browser's internal database so they won't disappear even if you refresh or close the tab.
 
-[ Disconnected / Offline State ]
-  ├── Device network drops (or user toggles Offline switch).
-  ├── User edits Document.
-  ├── Change saved durably to IndexedDB.
-  └── UI displays: "Saved locally — pending sync (1 item queued)".
-  └── NO data lost; queue remains intact across browser restarts.
+### Technical Explanation
+SyncSafe implements browser-side persistence using **IndexedDB** (`idb`). Each simulated device maintains a separate, isolated database instance:
+* `syncsafe_db_device-laptop-001`
+* `syncsafe_db_device-mobile-002`
 
-[ Reconnection Event ]
-  ├── Device detects network connectivity (or user toggles Online).
-  ├── ClientSyncCoordinator activates queue drain loop.
-  ├── Changes submitted sequentially in chronological order.
-  ├── If network drops during upload:
-  │     ├── Error caught; retryCount incremented.
-  │     ├── Bounded exponential backoff applied.
-  │     └── Change REMAINS in queue; NEVER marked synced prematurely.
-  └── Server returns 200 OK acceptance.
-  └── Change durably removed from IndexedDB queue.
+### Stored Object Stores:
+1. `cached_documents`: Holds the local document copy, known server version, and local modification flags.
+2. `pending_queue`: An append-only queue of changes waiting for server transmission.
+
+```typescript
+interface PendingQueueItem {
+  changeId: string;
+  documentId: string;
+  deviceId: string;
+  baseVersion: number;
+  payload: Partial<DocumentStructuredFields>;
+  timestamp: string;
+  status: 'pending' | 'in_flight' | 'acknowledged' | 'conflict';
+  retryCount: number;
+  lastError: string | null;
+}
 ```
 
----
-
-## 15. ClientSyncCoordinator & Truthful UI State Machine
-
-The client features a **Truth-in-UI State Machine**. The UI is strictly forbidden from showing "Saved" or "Synced" merely because the user pressed a button or saved data locally.
-
-```text
-┌──────────────────────────────────────┬────────────────────────────────────────────────────────┐
-│ UI Badge State                       │ Meaning & Guarantee                                    │
-├──────────────────────────────────────┼────────────────────────────────────────────────────────┤
-│ 🟢 Synced (V3)                       │ Server confirmed durable acceptance; client holds      │
-│                                      │ authoritative version.                                 │
-│ 🟡 Saved locally — pending sync (N)  │ Edit persisted in IndexedDB; waiting for network       │
-│                                      │ transmission or server acknowledgement.               │
-│ 🔵 Syncing with server...            │ HTTP request in-flight over the wire.                  │
-│ 🔴 Conflict Detected                 │ Stale base collision; requires explicit user review.   │
-│ ⚪ Offline (N queued)                │ Device has no network connection; edits safe locally.  │
-│ 🟠 Retry required (N)                │ Transient network failure; exponential backoff active. │
-└──────────────────────────────────────┴────────────────────────────────────────────────────────┘
-```
+**Restart Survival (`TC03`, `TC10`)**: When the browser is refreshed or reopened, the `ClientSyncCoordinator` reloads the pending queue from IndexedDB and resumes synchronization automatically upon network availability.
 
 ---
 
-## 16. Idempotency & Safe Retry Processing (`changeId`)
+## 17. Retry Handling & Idempotency (`changeId`)
 
-In distributed networks, timeouts are fundamentally ambiguous. Consider this real-world failure mode:
+### Simple Explanation
+If the internet drops just as the server saves your work, retrying the save won't create an accidental duplicate version.
+
+### Technical Explanation
+In distributed networks, timeouts are ambiguous: the client does not know whether a failure occurred before the server processed the request or while the server's response was returning.
 
 ```text
-Client ─────────────── POST changeId: "abc-123" ──────────────► Server
-                                                                   │
+Client ────────────── POST changeId: "uuid-123" ─────────────► Server
+                                                                  │
                                                       Server commits change!
                                                       Increments to Version 2.
-                                                                   │
-Client ◄─────────────── [NETWORK TIMEOUT / DROP] ──────────────────X
-(Client receives NO response; does not know if server processed it)
+                                                                  │
+Client ◄────────────── [NETWORK TIMEOUT / DROP] ──────────────────X
+(Client receives no response; does not know if server processed update)
 ```
 
-If the client retries the request without idempotency protection, a naive server will treat it as a second edit, incrementing the version to **Version 3** and creating a duplicate version!
-
-### SyncSafe’s Idempotency Solution (`TC08`, `TC09`)
-1. Every pending edit generates a permanent `changeId` (UUID v4) once when created.
-2. The client reuses the exact same `changeId` across all retries.
-3. The server checks the `changes` table:
-   ```sql
-   SELECT * FROM changes WHERE change_id = ?
-   ```
-4. If found and already accepted, the server **does not** create a duplicate version. It returns `{ status: 'already_processed', version: existing.result_version, document }`.
-5. The client safely marks the pending queue item as acknowledged and removes it.
+### SyncSafe's Idempotency Solution (`TC08`, `TC09`):
+1. A permanent UUID v4 `changeId` is assigned to each edit once and reused across all retries.
+2. The server queries the `changes` table for `change_id`.
+3. If the `changeId` already exists with `status = 'accepted'`, the server **does not** increment the version or apply the change again.
+4. The server returns `{ status: 'already_processed', version: existing.result_version }`.
+5. The client removes the change from its queue without duplicate version creation.
 
 ---
 
-## 17. Concurrent Writes & ACID Database Concurrency (`SEC03`)
+## 18. Concurrent Write Handling & ACID Transactions
 
-What happens when two devices submit edits against the exact same base version at the exact same millisecond?
+### Simple Explanation
+The database makes concurrent edits line up in a safe queue, preventing two devices from corrupting the document at the exact same millisecond.
 
-SyncSafe leverages **SQLite Write-Ahead Logging (WAL)** mode with immediate transactional write locks:
-```typescript
-const processChangeTx = db.transaction(() => {
-  // 1. Verify document ownership
-  // 2. Check changeId idempotency
-  // 3. Compare baseVersion with current_version
-  // 4. Perform 3-way merge or conflict detection
-  // 5. Commit version increment and changes row
-});
+### Technical Explanation
+When two devices submit changes against the same base version simultaneously, SyncSafe uses **SQLite Write-Ahead Logging (WAL)** mode with immediate transaction locks (`db.transaction(...)`):
+
+```text
+Laptop (Base V5) ────────┐ (Arrive at same millisecond)
+                         ├──► [ SQLite Immediate Write Lock ]
+Phone  (Base V5) ────────┘                 │
+                                           ▼
+                     1. Laptop acquires transaction lock first.
+                        └── Reads current_version = 5.
+                        └── Validates baseVersion == 5.
+                        └── Commits Version 6.
+                                           │
+                                           ▼
+                     2. Phone acquires transaction lock second.
+                        └── Reads current_version = 6.
+                        └── Detects baseVersion 5 < 6 (Stale Base).
+                        └── Evaluates 3-way merge / conflict.
+                        └── Zero lost updates (SEC03).
 ```
 
-When two concurrent HTTP requests arrive simultaneously:
-- **Request A** acquires the transaction lock. It reads `current_version = 1`, accepts the change, and commits `current_version = 2`.
-- **Request B** is serialized immediately behind Request A. When Request B enters the transaction, it reads `current_version = 2`. It immediately detects that its `baseVersion = 1` is stale and triggers the 3-Way Merge Engine.
-- **Zero Lost Updates**: Neither update is lost, and writes are strictly serialized.
+---
+
+## 19. Security & Access Control
+
+### 19.1 JWT Authentication
+All document endpoints require an `Authorization: Bearer <token>` header. The server verifies the token signature and extracts the authenticated user ID (`req.user.id`).
+
+### 19.2 Server-Enforced Identity (`SEC02`)
+The server strictly derives user identity from the cryptographically verified JWT. If a client attempts to inject a spoofed `userId` inside the request body, the server ignores the body parameter and uses `req.user.id`.
+
+### 19.3 Ownership Validation & Zero-Leakage 404s (`SEC01`)
+Every database query checks `WHERE id = ? AND owner_id = ?`. If User B attempts to access User A's document, the server responds with:
+```json
+{ "error": "Document not found or access denied" }
+```
+HTTP 404 is returned instead of 403 to prevent confirming document existence to unauthorized callers.
+
+### 19.4 Input Validation & Payload Protection (`SEC04`)
+All payloads are parsed and validated through **Zod** schemas. Requests exceeding size limits (500KB limit enforced via Express body parser) or containing invalid enum values are rejected with HTTP 400 or HTTP 413.
 
 ---
 
-## 18. Security & Document Access Authorization
+## 20. Client Synchronization State Machine
 
-SyncSafe enforces enterprise-grade security invariants verified by automated tests:
+To enforce the principle of truthfulness in the UI, SyncSafe defines six clear visual synchronization states:
 
-### SEC01: Per-Document Ownership & Cross-User Isolation
-- Every document query includes `WHERE id = ? AND owner_id = ?`.
-- If User B attempts to read, edit, list versions of, or resolve conflicts for User A's document, the server returns `404 Document not found or access denied`.
-- No metadata, title, or existence confirmation is leaked.
+| State Badge | Color | Technical Meaning |
+| :--- | :--- | :--- |
+| **Synced (V_)** | 🟢 Green | Server confirmed durable acceptance; client cache matches authoritative state. |
+| **Saved locally — pending sync (N)** | 🟡 Amber | Edit is persisted in client IndexedDB; waiting for network or server ACK. |
+| **Syncing with server...** | 🔵 Blue | HTTP change payload is currently in-flight across the wire. |
+| **Conflict Detected** | 🔴 Red | Stale base collision detected; requires explicit user review. |
+| **Offline (N queued)** | ⚪ Gray | Device network is offline; edits are stored safely in local queue. |
+| **Retry required (N)** | 🟠 Orange | Network failed or timed out; exponential retry backoff is active. |
 
-### SEC02: Server-Enforced Identity (No Body Trust)
-- User identity is extracted exclusively from the cryptographically verified JWT bearer token header (`req.user.id`).
-- If an attacker supplies `userId: "victim-id"` inside the JSON body, the server completely ignores the body property and uses the authenticated session identity.
-
-### SEC04: Payload Validation & Size Limits
-- Incoming JSON bodies are validated using **Zod** schemas.
-- Payloads exceeding size limits (e.g. 500KB) or containing illegal enum values are rejected with `413 Payload Too Large` or `400 Validation Failed`, keeping pending client data recoverable.
+> **Rule**: The UI never displays "Synced" until the server has confirmed durable storage.
 
 ---
 
-## 19. Phased Milestones Completed
+## 21. Dual-Device Simulator Interface
 
-SyncSafe was developed methodically across seven structured engineering milestones:
+To demonstrate multi-device synchronization within a single evaluation environment, SyncSafe includes an interactive **Dual-Device Simulator**:
 
-| Milestone | Deliverables & Implemented Capabilities | Verification Method | Status |
+* **Laptop Persona**: MacBook Pro 16" (Device ID: `device-laptop-001`)
+* **Mobile Persona**: Google Pixel 8 Pro (Device ID: `device-mobile-002`)
+
+### Simulator Features:
+1. **Isolated Storage**: Each simulator reads and writes to its own distinct IndexedDB database (`syncsafe_db_device-laptop-001` vs. `syncsafe_db_device-mobile-002`).
+2. **Network Controls**: Independent **ONLINE / OFFLINE** toggles for each device.
+3. **Chaos Engineering Controls**: Configurable artificial network latency sliders (0–2000ms) and simulated network timeout/failure checkboxes (`TC08`).
+4. **Queue Inspector**: Dedicated modal displaying pending queue records, retry counters, and payload previews.
+5. **Version History Inspector**: Chronological timeline displaying snapshot diffs, authors, and merge types.
+
+---
+
+## 22. Implementation Milestones
+
+All planned engineering milestones are 100% completed:
+
+| Milestone | Deliverables | Verification | Status |
 | :--- | :--- | :--- | :--- |
-| **Milestone 0: Repository Audit & Architecture** | Blueprint analysis, technology selection (SQLite WAL, Express, Vite, React, IndexedDB), schema planning, and roadmap definition. | Blueprint approval | ✅ Approved |
-| **Milestone 1: Data Model & Secure API** | Express + TypeScript API, SQLite database initialization, schemas for `users`, `devices`, `documents`, `versions`, `changes`, `conflicts`, and JWT auth. | Vitest unit tests | ✅ Completed |
-| **Milestone 2: Backend Sync Core & 3-Way Merge** | Transactional concurrency (`SEC03`), base-version validation, field-level 3-way auto-merge (`TC06`), conflict preservation (`TC07`), explicit resolution (`TC12`), and idempotency (`TC08`, `TC09`). | Vitest integration tests | ✅ Completed |
-| **Milestone 3: Durable Client Queue (IndexedDB)** | Browser IndexedDB wrappers (`idb`), isolated per-device databases, persistent queues surviving tab refresh/app restart, exponential backoff retry. | Browser restart validation | ✅ Completed |
-| **Milestone 4: Multi-Device Dual-Pane UI** | Dark-mode glassmorphic interface, side-by-side Laptop & Mobile simulators, independent offline toggles, latency sliders, 3-way conflict resolver, version history timeline. | Interactive UI testing | ✅ Completed |
-| **Milestone 5: Automated Acceptance Test Suite** | Automated test suite executing all 16 acceptance and security test scenarios. | `npm test` (100% pass) | ✅ Completed |
-| **Milestone 6: Judging Demo & GitHub Delivery** | 1-click Guided Demo Stepper, comprehensive documentation, root build/run scripts, and push to GitHub `rsaisachidhanandam-stack/GenGD`. | Git commit & push | ✅ Completed |
+| **Milestone 0: Audit & Architecture** | Scanned workspace, defined stack, designed database schemas, and defined 3-way merge rules. | Blueprint sign-off | ✅ Done |
+| **Milestone 1: Data Model & Secure API** | Express + TypeScript API, SQLite schema, JWT authentication, and ownership checks (`SEC01`, `SEC02`). | Unit tests | ✅ Done |
+| **Milestone 2: Backend Sync Core** | Transactional concurrency (`SEC03`), base-version validation, 3-way auto-merge (`TC06`), conflict preservation (`TC07`), and idempotency (`TC08`, `TC09`). | Integration tests | ✅ Done |
+| **Milestone 3: Durable Client Queue** | Browser IndexedDB wrappers (`idb`), isolated per-device databases, persistent queues surviving app restart (`TC03`, `TC10`). | Reload validation | ✅ Done |
+| **Milestone 4: Multi-Device UI** | Dual-device simulator (Laptop vs Mobile), network toggles, 3-way conflict resolver modal, version history inspector. | UI testing | ✅ Done |
+| **Milestone 5: Acceptance Test Suite** | Automated test suite verifying all 16 acceptance and security scenarios. | `npm test` | ✅ Done |
+| **Milestone 6: Demo Hardening & Delivery** | Guided Demo Stepper, complete documentation, root build scripts, and GitHub repository push. | Git push | ✅ Done |
 
 ---
 
-## 20. Automated Testing Results Matrix
+## 23. Testing & Verification (16 / 16 Passed)
 
-The SyncSafe test suite executes **16 distinct verification scenarios** using Vitest and Supertest against live server endpoints and database transactions.
+SyncSafe’s automated test suite is located in `server/tests/syncsafe.test.ts` and executed using **Vitest** and **Supertest**.
 
-> ### **Test Run Result: 100% PASS (16 / 16 Scenarios Verified)**
+> ### **Verification Result: 16 / 16 Scenarios Passing (100% Pass Rate)**
 
 ```
  ✓ server/tests/syncsafe.test.ts (16 scenarios)
@@ -692,188 +637,162 @@ The SyncSafe test suite executes **16 distinct verification scenarios** using Vi
    Duration:   1.76s
 ```
 
-### Detailed Acceptance Testing Results
+### Complete Test Results Matrix
 
-| Test ID | Test Scenario | Technical Verification Mechanics | Result |
-| :--- | :--- | :--- | :--- |
-| **TC01** | One device edits online | Validates `baseVersion == 1`; increments to Version 2; verifies version record inserted. | ✅ PASS |
-| **TC02** | Second device fetches authoritative state | Second device queries `GET /api/documents/:id` and receives authoritative Version 2 content. | ✅ PASS |
-| **TC03** | Device edits offline | Edit saved to IndexedDB local cache; queue holds change with `status: pending`. | ✅ PASS |
-| **TC04** | Offline device reconnects (server unchanged) | Change submitted with `baseVersion: 1`; server accepts and advances to Version 2 cleanly. | ✅ PASS |
-| **TC05** | Offline device reconnects after server changed | Server current is V2; incoming base is V1; triggers 3-way delta analysis. | ✅ PASS |
-| **TC06** | Two non-overlapping supported fields changed | Laptop updated `title`; Phone updated `status`; cleanly auto-merges into Version 3 (`auto_merged`). | ✅ PASS |
-| **TC07** | Same field changed differently | Both devices edited `content`; server preserves both branches and creates open conflict record. | ✅ PASS |
-| **TC08** | Network fails during upload | Simulated network timeout; change remains in queue; retry does not lose work. | ✅ PASS |
-| **TC09** | Same `changeId` submitted twice | Idempotency filter recognizes duplicate ID; returns prior outcome without creating duplicate version. | ✅ PASS |
-| **TC10** | App closes while offline | App simulated reload from IndexedDB; pending queue survives restart intact. | ✅ PASS |
-| **TC11** | Very old base version | Incoming change based on V1 submitted when server is at V4; evaluates all intermediate changes. | ✅ PASS |
-| **TC12** | Explicit resolution completes | User submits resolution; creates Version 3 (`manual_resolution`); all devices converge. | ✅ PASS |
-| **SEC01** | User A requests User B's document | Unauthorized cross-user request rejected with 404; zero metadata leakage. | ✅ PASS |
-| **SEC02** | Client tampers with `userId` in request body | Server derives identity strictly from JWT; spoofed body `userId` ignored. | ✅ PASS |
-| **SEC03** | Two writes race against same base version | Parallel requests serialized by SQLite transaction locks; no lost updates. | ✅ PASS |
-| **SEC04** | Malformed or oversized payload | Express JSON parser and Zod reject malformed payloads safely with 400/413. | ✅ PASS |
-
----
-
-## 21. Interactive Dual-Device Simulator UI
-
-The SyncSafe web interface provides an evaluator-friendly, side-by-side simulation of two independent physical devices:
-
-```text
-┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│  [SyncSafe Brand]   [Alex Rivera]   [Dual View] [Laptop Only] [Mobile Only]   [Guided Demo] [Reset V1]  │
-├───────────────────────────────────────────────────┬────────────────────────────────────────────────────┤
-│  💻 LAPTOP SIMULATOR (MacBook Pro 16")            │  📱 MOBILE SIMULATOR (Pixel 8 Pro)                 │
-│  Device ID: device-laptop-001                     │  Device ID: device-mobile-002                      │
-│  Network: [ONLINE]  Latency: 0ms  Timeout: [ ]    │  Network: [OFFLINE]  Latency: 0ms  Timeout: [ ]    │
-│  Status: 🟢 Synced (Version 1)                   │  Status: 🟡 Saved locally — pending sync (1)       │
-├───────────────────────────────────────────────────┼────────────────────────────────────────────────────┤
-│  Title:       SyncSafe Blueprint                  │  Title:       SyncSafe Blueprint                   │
-│  Status:      [ draft        ▼ ]                  │  Status:      [ in_review    ▼ ]                   │
-│  Description: Architecture specification          │  Description: Architecture specification           │
-│  Content:     # System Overview                   │  Content:     # System Overview                    │
-├───────────────────────────────────────────────────┼────────────────────────────────────────────────────┤
-│  [Restart App] [Queue (0)] [History (1)] [Save]   │  [Restart App] [Queue (1)] [History (1)] [Save]    │
-└───────────────────────────────────────────────────┴────────────────────────────────────────────────────┘
-```
-
-### Key UI Capabilities:
-1. **Isolated IndexedDB Storage**: Each simulator reads and writes to its own distinct database.
-2. **Network Controls**: Independent **ONLINE / OFFLINE** toggles for each device to test real disconnects.
-3. **Network Chaos Injection**: Latency sliders (0–2000ms) and simulated upload failure/timeout toggles (`TC08`).
-4. **Queue Inspector**: Real-time modal viewing queued change IDs, base versions, and retry counters.
-5. **Version History Inspector**: Complete chronological timeline displaying snapshots and diffs.
+| Test ID | Test Name | Scenario Verified | Expected Result | Status |
+| :--- | :--- | :--- | :--- | :--- |
+| **TC01** | Online Edit | Device edits online with baseVersion == 1 | Change accepted; Version 2 created | **PASS** |
+| **TC02** | Second Device Sync | Second device fetches document after V2 created | Receives latest authoritative Version 2 | **PASS** |
+| **TC03** | Offline Persistence | Device edits while offline | Edit saved to local IndexedDB queue | **PASS** |
+| **TC04** | Offline Reconnect | Device reconnects when server unchanged | Queued change accepted cleanly as V2 | **PASS** |
+| **TC05** | Stale Base Detection | Device reconnects after server already advanced | Stale base triggers 3-way delta analysis | **PASS** |
+| **TC06** | 3-Way Auto-Merge | Non-overlapping fields edited (Status vs Description) | Clean auto-merge creates `auto_merged` V3 | **PASS** |
+| **TC07** | Same-Field Conflict | Overlapping edits to Content field | Both branches preserved in `conflicts` table | **PASS** |
+| **TC08** | Network Failure | Network fails during upload submission | Item remains in queue; retry does not lose work | **PASS** |
+| **TC09** | Idempotency | Same `changeId` submitted twice | Prior outcome returned; no duplicate version | **PASS** |
+| **TC10** | App Restart Survival | App reloads while changes are pending offline | Queue survives restart intact from IndexedDB | **PASS** |
+| **TC11** | Old Ancestor Base | Edit based on V1 submitted when server is at V4 | Intervening changes evaluated; no overwrite | **PASS** |
+| **TC12** | Explicit Resolution | User resolves conflict via modal | Creates `manual_resolution` V; devices converge | **PASS** |
+| **SEC01** | Cross-User Access | User B attempts to read/write User A document | Request rejected with 404; zero metadata leak | **PASS** |
+| **SEC02** | User ID Spoofing | Client sends forged `userId` in JSON body | Server relies strictly on verified JWT identity | **PASS** |
+| **SEC03** | Concurrent Race | Two writes race simultaneously against same base | Transactions serialize safely; no lost updates | **PASS** |
+| **SEC04** | Payload Protection | Malformed JSON or oversized payload (>500KB) | Server safely rejects with HTTP 400 / 413 | **PASS** |
 
 ---
 
-## 22. Complete 20-Step Hackathon Demonstration Script
+## 24. Step-by-Step Hackathon Demonstration Script
 
-This step-by-step walkthrough can be performed manually or triggered via the **Guided Demo Script** button in the top navigation bar:
+This 2–3 minute demonstration can be performed manually or triggered step-by-step using the **Guided Demo Script** button in the UI:
 
-- **Step 1**: Open `http://localhost:5173`. Observe the dual-device dashboard with Laptop and Phone side-by-side.
-- **Step 2**: Click **Reset Demo (V1)**. Observe both devices confirm initialization at **Version 1**.
-- **Step 3**: On the **Laptop**, edit Document Title to `"SyncSafe Architectural Blueprint (V2)"`.
-- **Step 4**: Click **Save & Sync** on the Laptop. Observe status badge turn green: **Synced (V2)**.
-- **Step 5**: Observe the **Phone** automatically synchronize and update its local view to Version 2.
-- **Step 6**: On the **Phone**, click the **ONLINE** button to toggle it to **OFFLINE**. The badge updates to red/gray **OFFLINE**.
-- **Step 7**: On the **Phone**, edit the Status dropdown from `draft` to `in_review`.
-- **Step 8**: Click **Save Locally (Queue)** on the Phone. Observe status badge: **Saved locally — pending sync (1)**.
-- **Step 9**: On the **Laptop** (still online), edit the Description field to: `"Updated Q4 scope notes from team"`.
-- **Step 10**: Click **Save & Sync** on the Laptop. The server accepts this and advances to **Version 3**.
-- **Step 11**: On the **Phone**, click the **OFFLINE** button to reconnect to **ONLINE**.
-- **Step 12**: The `ClientSyncCoordinator` immediately drains the pending queue and transmits the Phone's V1-based change.
-- **Step 13**: The server performs a **3-Way Auto-Merge**: Phone's `status` and Laptop's `description` are merged into **Version 4 (`auto_merged`)**.
-- **Step 14**: On the **Laptop**, edit the Content field to: `"# Architecture Spec\n[Laptop Online Revision]"`. Save to create **Version 5**.
-- **Step 15**: On the **Phone**, toggle **OFFLINE** and edit Content to: `"# Architecture Spec\n[Phone Mobile Offline Revision]"`. Save locally.
-- **Step 16**: On the **Phone**, toggle **ONLINE**. The server analyzes the Content field, detects an overlapping collision, and preserves the conflict.
-- **Step 17**: Both devices display a pulsating red **Conflict Detected** badge.
-- **Step 18**: Click **Review Conflict** to open the 3-Way Visual Conflict Resolver.
-- **Step 19**: Review the Base, Server, and Incoming branches. Select **Custom Merge** and edit the combined text.
-- **Step 20**: Click **Commit Resolution**. The server creates **Version 6 (`manual_resolution`)**, and both Laptop and Phone converge to the exact same final version. Click **History** on either device to inspect the entire 6-version immutable ledger!
-
----
-
-## 23. Why SyncSafe Is Different: Key Engineering Choices
-
-SyncSafe does not claim that the concept of file synchronization is new. Rather, SyncSafe focuses on making **synchronization safety explicit and verifiable**:
-
-1. **No Silent Overwrite**: Unlike default HTTP REST backends, SyncSafe requires every update to state its base version. Stale edits never overwrite newer versions.
-2. **Deterministic 3-Way Merge**: Structured fields are merged automatically when disjoint, saving users from unnecessary conflict prompts.
-3. **Conflict Preservation**: Conflicting branches are stored in a dedicated relational table rather than creating rogue disk files.
-4. **Explicit Resolution**: Users retain ultimate authority through an interactive 3-way visual merge modal.
-5. **Durable Client Queue**: IndexedDB persistence prevents offline data loss across browser reloads or device reboots.
-6. **Idempotent Retry**: Stable `changeId` tracking guarantees that network timeouts and repeated retries never produce duplicate versions.
-7. **Transactional Concurrency**: SQLite WAL transactions serialize simultaneous writes, eliminating race conditions.
-8. **Truthful UI Status**: The user interface never reports "Saved" or "Synced" before server confirmation.
-9. **Immutable History**: Rollbacks create new versions rather than erasing historical records.
-10. **Zero-Trust Security**: Server derives identity exclusively from cryptographically verified tokens.
+* **Step 1**: Open `http://localhost:5173`. Point out the Dual View displaying the **MacBook Pro** and **Pixel 8 Pro** side-by-side.
+* **Step 2**: Click **Reset Demo (V1)**. Point out that both devices and the server start at **Version 1**.
+* **Step 3**: On the **Laptop**, edit Document Title to `"SyncSafe Architectural Blueprint (V2)"`.
+* **Step 4**: Click **Save & Sync** on the Laptop. Point out the badge updating to **Synced (V2)**.
+* **Step 5**: Observe the **Phone** updating to Version 2.
+* **Step 6**: On the **Phone**, click the **ONLINE** button to switch it to **OFFLINE**.
+* **Step 7**: On the **Phone**, change the Status dropdown from `draft` to `in_review`.
+* **Step 8**: Click **Save Locally (Queue)** on the Phone. Point out the truthful UI status badge: **Saved locally — pending sync (1)**.
+* **Step 9**: On the **Laptop** (still online), edit the Description to: `"Updated Q4 scope notes from laptop team"`.
+* **Step 10**: Click **Save & Sync** on the Laptop. The server advances to **Version 3**.
+* **Step 11**: On the **Phone**, toggle the network switch back to **ONLINE**.
+* **Step 12**: The `ClientSyncCoordinator` transmits the queued phone edit.
+* **Step 13**: Explain the **3-Way Auto-Merge**: Because the Phone modified `status` and the Laptop modified `description`, the server merges them into **Version 4 (`auto_merged`)** without asking the user.
+* **Step 14**: On the **Laptop**, edit Content to: `"# Architecture Spec\n[Laptop Online Revision]"`. Save to create **Version 5**.
+* **Step 15**: On the **Phone**, toggle **OFFLINE** and edit Content to: `"# Architecture Spec\n[Phone Offline Revision]"`. Save locally.
+* **Step 16**: On the **Phone**, toggle **ONLINE**.
+* **Step 17**: Explain **Conflict Detection**: The server detects that both devices modified `content` differently. It preserves the conflict and displays the red **Conflict Detected** badge.
+* **Step 18**: Click **Review Conflict** to open the Conflict Resolver.
+* **Step 19**: Show the judges the three columns: **Base (V1)**, **Server (V5)**, and **Incoming (Phone)**.
+* **Step 20**: Select **Custom Merge** and edit the combined text in the interactive editor.
+* **Step 21**: Click **Commit Resolution**. The server creates **Version 6 (`manual_resolution`)**.
+* **Step 22**: Point out that both devices converge to Version 6.
+* **Step 23**: Click **History** on either device to display the immutable timeline of Versions 1 through 6.
+* **Step 24**: Click **Queue** to show the judges that the queue is empty because the server acknowledged acceptance.
+* **Step 25**: Run `npm test` in the terminal to show that all 16 automated tests pass.
 
 ---
 
-## 24. Future Architectural Roadmap
+## 25. Engineering Differentiators
 
-To maintain engineering clarity, we explicitly distinguish future enhancements from what is already implemented:
+SyncSafe’s engineering advantages are defined by concrete architectural mechanisms:
 
-- **Real-Time WebSockets**: Adding WebSocket notifications to eliminate polling (currently advisory polling is used).
-- **CRDT / OT Integration**: Supporting character-by-character real-time co-authoring for rich text editors.
-- **Binary Chunk Synchronization**: Integrating content-defined chunking (FastCDC) and rolling hashes for large multi-gigabyte media files.
-- **Cloud Object Storage Integration**: Storing binary file blobs in AWS S3 or Supabase Storage with relational metadata pointers.
-- **Distributed Database Migration**: Transitioning from single-node SQLite WAL to distributed multi-master databases (e.g., CockroachDB or Spanner) for planetary scale.
-- **End-to-End Encryption (E2EE)**: Client-side cryptographic key derivation so the server cannot read document contents.
-- **Native Mobile Clients**: Packaging the engine for native iOS/Android using Flutter or React Native with native SQLite bindings.
-
----
-
-## 25. System Limitations & Boundary Conditions
-
-A rigorous engineering review requires acknowledging prototype boundaries:
-1. **Document Data Model**: SyncSafe currently focuses on structured text and Markdown documents. It does not perform semantic 3-way merging on arbitrary binary files (e.g., compiled `.exe` or Photoshop `.psd` files).
-2. **Client Environment**: The current demonstration runs both Laptop and Mobile personas in an interactive dual-client web simulator. While their storage and network stacks are completely isolated via independent IndexedDB instances, they share the host browser runtime.
-3. **Database Scale**: SQLite in WAL mode is exceptional for prototypes and edge computing (handling thousands of transactions per second), but a global commercial deployment would require distributed clustering.
-
-These design choices are appropriate and practical for a robust hackathon prototype.
+1. **No Silent Overwrites**: Updates require base-version validation; stale edits cannot overwrite newer server states.
+2. **Deterministic 3-Way Auto-Merge**: Non-overlapping structured fields merge automatically, minimizing unnecessary user interruptions.
+3. **Conflict Preservation**: Conflicting branches are immutably preserved in relational storage rather than creating disconnected duplicate files on disk.
+4. **Explicit Conflict Resolution**: The user retains authority via an interactive 3-way visual merge tool.
+5. **Durable Client Queue**: IndexedDB persistence prevents offline data loss across browser reloads or device crashes.
+6. **Idempotent Retries**: Stable `changeId` tracking guarantees that retrying timed-out requests never creates duplicate versions.
+7. **Transactional Concurrency**: SQLite WAL mode with immediate write transactions serializes simultaneous writes safely (`SEC03`).
+8. **Truthful Synchronization UI**: The interface never displays "Synced" until the server has confirmed durable storage.
+9. **Immutable History**: Restoring an old version creates a new version rather than modifying history.
+10. **Ownership & Authentication**: Server-enforced JWT identity prevents user spoofing and protects document isolation.
 
 ---
 
-## 26. Comprehensive Judge Questions & Answers
+## 26. Current System Limitations
+
+To maintain engineering credibility, SyncSafe acknowledges its prototype boundaries:
+
+1. **Structured Document Model**: SyncSafe is designed for structured text and Markdown fields (`title`, `status`, `description`, `content`). It does not implement semantic merging for compiled binary files (e.g. `.exe`, `.zip`, `.psd`).
+2. **Dual-Device Simulator**: The two devices run as isolated simulator profiles within a single browser runtime. While their IndexedDB storage and network controls are completely isolated, they share the host browser engine.
+3. **Database Scale**: SQLite with WAL mode is appropriate for prototypes and edge deployments, but a large-scale commercial cloud service would require a distributed database.
+4. **Real-Time Keystroke Collaboration**: Continuous character-by-character live co-authoring (CRDT/OT) is outside the scope of this file synchronization prototype.
+
+---
+
+## 27. Future Architectural Roadmap
+
+The following capabilities are **not currently implemented** and represent future development phases:
+
+* **WebSocket Event Streaming**: Replacing advisory polling with bi-directional WebSocket events for push notifications.
+* **CRDT / OT Integration**: Supporting character-by-character real-time co-authoring for rich-text fields.
+* **Binary Chunk Synchronization**: Implementing content-defined chunking (FastCDC) and rolling hashes for large media files.
+* **Cloud Object Storage**: Offloading document blobs to S3/GCS while maintaining relational metadata in the database.
+* **Distributed Database Migration**: Migrating from single-node SQLite to distributed SQL engines (e.g., CockroachDB or Spanner).
+* **End-to-End Encryption (E2EE)**: Client-side cryptographic key derivation ensuring the server cannot read document contents.
+* **Native Mobile Apps**: Packaging the engine for native iOS/Android using Flutter or React Native with native SQLite bindings.
+
+---
+
+## 28. Comprehensive Judge Questions & Answers
 
 ### Q1: Why not simply use Last-Write-Wins (LWW)?
-**Answer:** Last-Write-Wins is inherently dangerous for user content. If a laptop user spends hours drafting a proposal and a mobile user goes offline and edits a single typo, an LWW system will overwrite the entire laptop draft when the mobile device reconnects. SyncSafe eliminates silent overwrites by verifying base versions.
+**Answer:** Last-Write-Wins is inherently unsafe for document content. If a laptop user spends hours writing a document and an offline mobile user makes a small edit based on an older version, an LWW system will overwrite the laptop’s newer work when the mobile device reconnects. SyncSafe eliminates silent overwrites by validating base versions.
 
 ### Q2: How does SyncSafe detect conflicts?
-**Answer:** The client sends its `baseVersion` with every change. If `baseVersion < current_version`, the server retrieves the base version snapshot and computes the fields modified by the server versus the client. If both modified the same field with different values, a conflict is detected.
+**Answer:** Every update sends its `baseVersion`. If `baseVersion < current_version`, the server retrieves the common ancestor snapshot and calculates which fields were modified by the server versus the client. If both modified the same field differently, a conflict is detected.
 
-### Q3: What happens when a user edits while offline?
-**Answer:** Edits are written immediately to the local cache and saved durably into a pending queue inside **IndexedDB**. The UI reflects `"Saved locally — pending sync"`. Work survives tab reloads and system reboots.
+### Q3: How does offline synchronization work?
+**Answer:** Edits made while offline are saved immediately to a persistent queue in **IndexedDB**. The UI displays `"Saved locally — pending sync"`. Changes survive tab reloads and system restarts. When connectivity returns, the `ClientSyncCoordinator` drains the queue and sends updates in order.
 
-### Q4: What happens when the network returns?
-**Answer:** The `ClientSyncCoordinator` detects connectivity, iterates through the IndexedDB queue in chronological order, and transmits changes to the server. If safe, they are accepted or auto-merged; if overlapping, a conflict is created.
+### Q4: What happens when the network comes back?
+**Answer:** The client coordinator detects connectivity and submits queued changes with their original `baseVersion` and `changeId`. The server checks the base version, performs an auto-merge or conflict preservation, and the client removes the queue item only after receiving server acknowledgement.
 
-### Q5: What happens if the server commits a change but the network drops before the client receives the response?
-**Answer:** The client times out and retries sending the change with the same `changeId`. The server checks its `changes` table, recognizes the duplicate `changeId`, and returns the previously committed outcome without creating a duplicate version.
+### Q5: What if the server processed the request but the network response was lost?
+**Answer:** The client times out and retries using the exact same `changeId`. The server checks its `changes` table, recognizes the duplicate `changeId`, and returns the previously committed outcome without creating a duplicate version.
 
 ### Q6: Why is `changeId` necessary?
-**Answer:** Because network timeouts are ambiguous. A client cannot distinguish between a dropped request and a dropped response. A stable `changeId` ensures idempotency across all retry attempts.
+**Answer:** Because network timeouts are ambiguous. A client cannot distinguish between a dropped request and a dropped response. A stable `changeId` provides idempotent retry behavior across unreliable connections.
 
 ### Q7: What is a 3-way merge?
-**Answer:** A 3-way merge compares three states: the common **Base** ancestor, the **Server** current state, and the **Incoming** client change. By comparing both changes against the common base, the system identifies exactly which fields changed and merges non-overlapping edits automatically.
+**Answer:** A 3-way merge compares three versions: the common **Base** ancestor, the current **Server** state, and the **Incoming** client change. By comparing both changes against the base, the server identifies independent field edits and merges non-overlapping changes automatically.
 
-### Q8: What happens when two devices change the same field?
-**Answer:** SyncSafe treats this as a true semantic conflict. It preserves the Server state, the Incoming state, and the Base state in the `conflicts` table and requires the user to select or custom-merge the result.
+### Q8: What happens when both devices modify the same field?
+**Answer:** The server detects an overlapping collision. It refuses to guess human intent, preserves the Server state, Incoming state, and Base state in the `conflicts` table, and requires the user to select or custom-merge the result.
 
-### Q9: How do you prevent unauthorized users from accessing documents?
-**Answer:** Every endpoint verifies a cryptographically signed JWT. Identity is derived server-side. Document queries verify `owner_id = req.user.id`. Unauthorized access attempts return a strict 404 with no metadata leakage.
+### Q9: How do you secure the API?
+**Answer:** All endpoints verify a cryptographically signed JWT. Identity is derived server-side. Document queries verify `WHERE id = ? AND owner_id = ?`. Unauthorized access attempts receive a strict 404 with zero metadata leakage.
 
-### Q10: Why did you choose SQLite for the prototype?
-**Answer:** SQLite with Write-Ahead Logging (WAL) provides true ACID transactions, fast zero-configuration setup, atomic serial write locks, and high embedded performance without external daemon complexity.
+### Q10: Why SQLite?
+**Answer:** SQLite with Write-Ahead Logging (WAL) provides true ACID transactions, fast zero-configuration setup, atomic serial write locks, and high embedded performance without external database dependencies.
 
-### Q11: Why did you choose IndexedDB for the client?
-**Answer:** Unlike `localStorage` (which is synchronous, size-limited to 5MB, and prone to main-thread blocking) or in-memory React state, IndexedDB provides asynchronous, structured, durable transactional storage that survives browser restarts.
+### Q11: Why IndexedDB?
+**Answer:** Unlike `localStorage` (which is synchronous, limited to 5MB, and prone to UI blocking), IndexedDB provides asynchronous, structured, durable storage that reliably persists queues across browser restarts.
 
-### Q12: How do you handle simultaneous race conditions on the server?
-**Answer:** All change submissions execute inside an atomic SQLite transaction lock. Concurrent requests are serialized immediately. The first commit succeeds directly; the second sees an updated version and triggers 3-way merge analysis.
+### Q12: How do you handle concurrent writes?
+**Answer:** All change submissions execute inside an atomic SQLite write transaction. Concurrent requests are serialized immediately. The first commit succeeds directly; the second sees an updated version and triggers 3-way merge analysis.
 
-### Q13: How do you prove that the implementation works?
-**Answer:** We wrote an automated test suite with Vitest and Supertest covering all 16 acceptance scenarios (`TC01`–`TC12` and `SEC01`–`SEC04`). Every test passes with a 100% success rate.
+### Q13: How do you prove the system works?
+**Answer:** We implemented an automated test suite with Vitest and Supertest covering all 16 acceptance and security scenarios (`TC01`–`TC12` and `SEC01`–`SEC04`). All 16 tests pass with a 100% success rate.
 
-### Q14: What happens if real-time push notifications fail?
-**Answer:** In SyncSafe, push notifications are strictly advisory. The database and REST API remain the single source of truth. Clients always fetch authoritative state directly from the server.
+### Q14: What happens if push notifications or WebSockets fail?
+**Answer:** Notifications are strictly advisory. The database and REST API remain the single source of truth. Clients always fetch authoritative state directly from the server.
 
-### Q15: How would you scale this architecture to millions of users?
-**Answer:** We would migrate SQLite to a distributed SQL database (such as Spanner or CockroachDB), partition documents by user/team ID, store document content blobs in S3 with Redis caching, and distribute synchronization workers using BullMQ.
+### Q15: How would you scale this to production?
+**Answer:** In production, we would migrate to a distributed SQL database (such as CockroachDB or Spanner), partition documents by user/workspace, store file content blobs in S3 with Redis caching, and distribute sync tasks via queue workers.
 
-### Q16: Why didn't you use CRDTs (Conflict-Free Replicated Data Types)?
-**Answer:** CRDTs are excellent for character-by-character real-time co-editing (like Google Docs), but introduce substantial memory overhead, tombstones, and complex mathematical constraints. For document-level and field-level multi-device synchronization, structured 3-way merges and explicit conflict preservation are cleaner, faster, and more auditable.
+### Q16: Why didn't you use CRDTs?
+**Answer:** CRDTs are designed for character-by-character real-time co-authoring (like Google Docs), but introduce substantial memory overhead, tombstones, and complex mathematical constraints. For document-level and field-level multi-device synchronization, structured 3-way merges and explicit conflict preservation are cleaner, faster, and more auditable.
 
-### Q17: What makes SyncSafe truly different from simple hackathon projects?
-**Answer:** Most prototypes build a mock UI that displays "Saved" without a backend, or use naive overwrite APIs. SyncSafe is a complete, working synchronization engine with real ACID concurrency, durable IndexedDB queues, idempotent retries, field-level merges, and automated security verification.
+### Q17: How is this different from a mock UI?
+**Answer:** SyncSafe has an operational backend with real database tables, transactional locking, cryptographic JWT authentication, genuine IndexedDB persistence, a field-level 3-way merge engine, and 16 passing automated tests.
 
-### Q18: What would you build next with another week of development?
-**Answer:** We would implement WebSocket live updates, integrate AWS S3 for large binary file sync with chunk hashing, and wrap the client in React Native for physical Android and iOS devices.
+### Q18: What would you implement next?
+**Answer:** We would implement WebSocket event streaming, integrate S3-compatible chunk storage for large files, and wrap the client in React Native for physical Android and iOS devices.
 
 ---
 
-## 27. The 60-Second Spoken Pitch
+## 29. The 60-Second Spoken Pitch
 
 > *"Judges, when you edit a document on your laptop and simultaneously update it on your phone while offline, what happens? In naive systems, your offline phone edit silently overwrites your laptop work, or you end up with messy 'conflicted copy' files scattered across your drive.*
 >
@@ -885,57 +804,52 @@ These design choices are appropriate and practical for a robust hackathon protot
 
 ---
 
-## 28. End-to-End System Architecture Diagram
+## 30. End-to-End Architecture & Sync Flow Diagram
 
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│                          Dual-Device Web Client                        │
-│                                                                        │
-│   ┌────────────────────────────────┐  ┌─────────────────────────────┐  │
-│   │   Laptop Simulator             │  │   Mobile Simulator          │  │
-│   │   - MacBook Pro Persona        │  │   - Pixel 8 Pro Persona     │  │
-│   │   - Network Online/Offline Sw  │  │   - Network Online/Offline  │  │
-│   │   - Latency & Chaos Controls   │  │   - Latency & Chaos Controls│  │
-│   └───────────────┬────────────────┘  └──────────────┬──────────────┘  │
-│                   │                                  │                 │
-│                   ▼                                  ▼                 │
-│   ┌────────────────────────────────┐  ┌─────────────────────────────┐  │
-│   │   IndexedDB Cache & Queue      │  │   IndexedDB Cache & Queue   │  │
-│   │   - DB: syncsafe_db_laptop     │  │   - DB: syncsafe_db_mobile  │  │
-│   │   - Persistent pending_queue   │  │   - Persistent pending_queue│  │
-│   └───────────────┬────────────────┘  └──────────────┬──────────────┘  │
-└───────────────────┼──────────────────────────────────┼─────────────────┘
-                    │ REST / Bearer JWT                │ REST / Bearer JWT
-                    ▼                                  ▼
-┌────────────────────────────────────────────────────────────────────────┐
-│                   Express + TypeScript Sync Engine                     │
-│                                                                        │
-│   ├── JWT Auth & Document Ownership Validation (SEC01, SEC02)          │
-│   ├── Zod Schema & Payload Size Filter (SEC04)                         │
-│   ├── Idempotency Engine (changeId Deduplication Filter) (TC08, TC09)  │
-│   ├── Base-Version Verification & Concurrency Lock (SEC03)             │
-│   ├── Field-Level 3-Way Auto-Merge Engine (TC05, TC06)                 │
-│   └── Conflict Preservation & Resolution Coordinator (TC07, TC12)      │
-└───────────────────────────────────┬────────────────────────────────────┘
-                                    │ SQLite Transaction (WAL Mode)
-                                    ▼
-┌────────────────────────────────────────────────────────────────────────┐
-│                   Authoritative Relational Storage                     │
-│                                                                        │
-│   ├── users       : Authenticated credentials & session identity       │
-│   ├── devices     : Registered hardware IDs & last seen timestamps     │
-│   ├── documents   : Authoritative current_version pointers & fields    │
-│   ├── versions    : Immutable append-only version snapshots & parents  │
-│   ├── changes     : Idempotency log mapping changeId to result_version │
-│   └── conflicts   : Preserved Base, Server, and Incoming branches      │
-└────────────────────────────────────────────────────────────────────────┘
+```text
+┌────────────────────────────────────────────────────────┐
+│                   Dual-Device Web UI                   │
+│                                                        │
+│   ┌───────────────────────┐   ┌────────────────────┐   │
+│   │  Laptop Simulator     │   │  Phone Simulator   │   │
+│   │  - IndexedDB Cache    │   │  - IndexedDB Cache │   │
+│   │  - Pending Queue      │   │  - Pending Queue   │   │
+│   │  - Offline Toggle     │   │  - Offline Toggle  │   │
+│   └───────────┬───────────┘   └─────────┬──────────┘   │
+└───────────────┼─────────────────────────┼──────────────┘
+                │ HTTP / REST + Bearer JWT│ HTTP / REST + Bearer JWT
+                ▼                         ▼
+┌────────────────────────────────────────────────────────┐
+│          Express + TypeScript Sync Engine              │
+│                                                        │
+│   - JWT Authentication & Server-Verified Identity      │
+│   - Document Ownership Validation                      │
+│   - Zod Payload Schema & Size Validation (SEC04)       │
+│   - Idempotency & Duplicate Change Filter (TC08, TC09) │
+│   - Transactional Concurrency Control (SEC03)          │
+│   - Base-Version Verification Engine                   │
+│   - Field-Level 3-Way Auto-Merge Engine (TC06)         │
+│   - Conflict Preservation & Resolution Engine (TC07)   │
+└───────────────────────────┬────────────────────────────┘
+                            │ SQLite Transaction (WAL Mode)
+                            ▼
+┌────────────────────────────────────────────────────────┐
+│              SQLite WAL / ACID Storage                 │
+│                                                        │
+│  users     ──< devices                                 │
+│  documents ──< versions (Immutable Append-Only Log)    │
+│  changes   ──< conflicts (Preserved 3-Way Snapshots)   │
+└────────────────────────────────────────────────────────┘
+
+Logical Synchronization Lifecycle:
+EDIT ──► CACHE ──► QUEUE ──► BASE VERSION CHECK ──► ACCEPT / MERGE / CONFLICT ──► NEW IMMUTABLE VERSION ──► ACKNOWLEDGEMENT ──► CONVERGENCE
 ```
 
 ---
 
-## 29. Conclusion
+## 31. Final Conclusion
 
-SyncSafe successfully fulfills all requirements of **PS-13: Google Drive – Same File, Multiple Devices**. By enforcing server-authoritative versioning, transactional database concurrency, field-level 3-way auto-merging, persistent client queues, and transparent visual conflict resolution, SyncSafe eliminates silent data loss and provides a verifiable blueprint for reliable multi-device computing.
+SyncSafe provides a robust, verifiable solution to **PS-13: Google Drive – Same File, Multiple Devices**. By combining base-version concurrency control, field-level 3-way auto-merging, durable client-side IndexedDB persistence, idempotent retries, and transparent 3-way visual conflict resolution, SyncSafe eliminates silent data loss and proves that multi-device file synchronization can be both robust and truthful.
 
 ---
-*Documentation compiled and verified against SyncSafe v1.0.0 (Commit `51e6bd2` on `main`).*
+*Documentation verified against SyncSafe v1.0.0 (Commit `a2d2ccd` on `main`).*
