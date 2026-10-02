@@ -10,7 +10,10 @@ import {
   Activity,
   GitMerge,
   FolderOpen,
-  RefreshCw
+  RefreshCw,
+  Trash2,
+  RotateCcw,
+  Star
 } from 'lucide-react';
 import { type CachedDocument } from '../services/indexedDbStorage';
 
@@ -28,6 +31,10 @@ interface DriveViewProps {
   emptyTitle?: string;
   emptySubtitle?: string;
   isLoading?: boolean;
+  onDeleteDoc?: (docId: string) => Promise<void>;
+  onRestoreDoc?: (docId: string) => Promise<void>;
+  onToggleStar?: (docId: string) => Promise<void>;
+  isTrash?: boolean;
 }
 
 export const DriveView: React.FC<DriveViewProps> = ({
@@ -43,7 +50,11 @@ export const DriveView: React.FC<DriveViewProps> = ({
   subtitle = 'Your files, synchronized safely across devices.',
   emptyTitle = 'No documents found',
   emptySubtitle = 'Create your first synchronized Markdown document to get started.',
-  isLoading = false
+  isLoading = false,
+  onDeleteDoc,
+  onRestoreDoc,
+  onToggleStar,
+  isTrash = false
 }) => {
   const [viewLayout, setViewLayout] = useState<'grid' | 'list'>('grid');
   const [sortBy, setSortBy] = useState<'date' | 'name' | 'version'>('date');
@@ -435,16 +446,65 @@ export const DriveView: React.FC<DriveViewProps> = ({
                   paddingTop: '10px'
                 }}>
                   <span>Modified {formatRelativeTime(doc.updated_at)}</span>
-                  <button
-                    className="btn btn-outline btn-sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onOpenDoc(doc);
-                    }}
-                    style={{ padding: '3px 9px', fontSize: '0.72rem', fontWeight: 600 }}
-                  >
-                    Open
-                  </button>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    {onToggleStar && !isTrash && !doc.deleted_at && (
+                      <button
+                        className="btn btn-ghost btn-sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onToggleStar(doc.id);
+                        }}
+                        style={{ padding: '3px 6px', color: doc.is_starred ? '#f59e0b' : 'var(--text-muted)' }}
+                        title={doc.is_starred ? 'Starred' : 'Add to Starred'}
+                      >
+                        <Star size={13} fill={doc.is_starred ? '#f59e0b' : 'none'} />
+                      </button>
+                    )}
+                    {isTrash || doc.deleted_at ? (
+                      onRestoreDoc && (
+                        <button
+                          className="btn btn-outline btn-sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onRestoreDoc(doc.id);
+                          }}
+                          style={{ padding: '3px 8px', fontSize: '0.72rem', color: '#059669', borderColor: 'rgba(16, 185, 129, 0.3)', gap: '4px' }}
+                          title="Restore Document"
+                        >
+                          <RotateCcw size={12} />
+                          <span>Restore</span>
+                        </button>
+                      )
+                    ) : (
+                      <>
+                        {onDeleteDoc && (
+                          <button
+                            className="btn btn-ghost btn-sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (window.confirm(`Move "${doc.name || doc.title}" to Trash? Version history will be preserved.`)) {
+                                onDeleteDoc(doc.id);
+                              }
+                            }}
+                            style={{ padding: '3px 6px', color: '#ef4444' }}
+                            title="Move to Trash"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        )}
+                        <button
+                          className="btn btn-outline btn-sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onOpenDoc(doc);
+                          }}
+                          style={{ padding: '3px 9px', fontSize: '0.72rem', fontWeight: 600 }}
+                        >
+                          Open
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
             );
@@ -543,15 +603,63 @@ export const DriveView: React.FC<DriveViewProps> = ({
                       {formatRelativeTime(doc.updated_at)}
                     </td>
                     <td style={{ padding: '12px 18px', textAlign: 'right' }}>
-                      <button
-                        className="btn btn-outline btn-sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onOpenDoc(doc);
-                        }}
-                      >
-                        Open
-                      </button>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '6px' }}>
+                        {onToggleStar && !isTrash && !doc.deleted_at && (
+                          <button
+                            className="btn btn-ghost btn-sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onToggleStar(doc.id);
+                            }}
+                            style={{ padding: '4px 6px', color: doc.is_starred ? '#f59e0b' : 'var(--text-muted)' }}
+                            title={doc.is_starred ? 'Starred' : 'Add to Starred'}
+                          >
+                            <Star size={13} fill={doc.is_starred ? '#f59e0b' : 'none'} />
+                          </button>
+                        )}
+                        {isTrash || doc.deleted_at ? (
+                          onRestoreDoc && (
+                            <button
+                              className="btn btn-outline btn-sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onRestoreDoc(doc.id);
+                              }}
+                              style={{ padding: '3px 8px', fontSize: '0.72rem', color: '#059669', borderColor: 'rgba(16, 185, 129, 0.3)', gap: '4px' }}
+                            >
+                              <RotateCcw size={12} />
+                              <span>Restore</span>
+                            </button>
+                          )
+                        ) : (
+                          <>
+                            {onDeleteDoc && (
+                              <button
+                                className="btn btn-ghost btn-sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (window.confirm(`Move "${doc.name || doc.title}" to Trash? Version history will be preserved.`)) {
+                                    onDeleteDoc(doc.id);
+                                  }
+                                }}
+                                style={{ padding: '4px 6px', color: '#ef4444' }}
+                                title="Move to Trash"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            )}
+                            <button
+                              className="btn btn-outline btn-sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onOpenDoc(doc);
+                              }}
+                            >
+                              Open
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );

@@ -57,23 +57,93 @@ export class SyncEngine {
   /**
    * Fetch document by ID verifying ownership
    */
-  static getDocumentById(documentId: string, userId: string): DocumentRecord | null {
+  static getDocumentById(documentId: string, userId: string, includeDeleted = false): DocumentRecord | null {
     const db = getDatabase();
-    const doc = db.prepare(`
-      SELECT * FROM documents WHERE id = ? AND owner_id = ?
-    `).get(documentId, userId) as DocumentRecord | undefined;
+    const query = includeDeleted
+      ? `SELECT * FROM documents WHERE id = ? AND owner_id = ?`
+      : `SELECT * FROM documents WHERE id = ? AND owner_id = ? AND deleted_at IS NULL`;
 
+    const doc = db.prepare(query).get(documentId, userId) as DocumentRecord | undefined;
     return doc || null;
   }
 
   /**
-   * List all documents for user
+   * List all active documents for user (excluding trash)
    */
   static listDocuments(userId: string): DocumentRecord[] {
     const db = getDatabase();
     return db.prepare(`
-      SELECT * FROM documents WHERE owner_id = ? ORDER BY updated_at DESC
+      SELECT * FROM documents WHERE owner_id = ? AND deleted_at IS NULL ORDER BY updated_at DESC
     `).all(userId) as DocumentRecord[];
+  }
+
+  /**
+   * List all soft-deleted documents in Trash for user
+   */
+  static listTrashDocuments(userId: string): DocumentRecord[] {
+    const db = getDatabase();
+    return db.prepare(`
+      SELECT * FROM documents WHERE owner_id = ? AND deleted_at IS NOT NULL ORDER BY updated_at DESC
+    `).all(userId) as DocumentRecord[];
+  }
+
+  /**
+   * List all starred documents for user
+   */
+  static listStarredDocuments(userId: string): DocumentRecord[] {
+    const db = getDatabase();
+    return db.prepare(`
+      SELECT * FROM documents WHERE owner_id = ? AND deleted_at IS NULL AND is_starred = 1 ORDER BY updated_at DESC
+    `).all(userId) as DocumentRecord[];
+  }
+
+  /**
+   * Soft-delete document (move to Trash) without destroying version history
+   */
+  static deleteDocument(userId: string, documentId: string): { success: boolean; id: string } {
+    const db = getDatabase();
+    const doc = this.getDocumentById(documentId, userId);
+    if (!doc) throw new Error('DOCUMENT_NOT_FOUND');
+
+    const now = new Date().toISOString();
+    db.prepare(`
+      UPDATE documents SET deleted_at = ?, updated_at = ? WHERE id = ? AND owner_id = ?
+    `).run(now, now, documentId, userId);
+
+    return { success: true, id: documentId };
+  }
+
+  /**
+   * Restore document from Trash
+   */
+  static restoreDocument(userId: string, documentId: string): DocumentRecord {
+    const db = getDatabase();
+    const doc = this.getDocumentById(documentId, userId, true);
+    if (!doc) throw new Error('DOCUMENT_NOT_FOUND');
+
+    const now = new Date().toISOString();
+    db.prepare(`
+      UPDATE documents SET deleted_at = NULL, updated_at = ? WHERE id = ? AND owner_id = ?
+    `).run(now, documentId, userId);
+
+    return this.getDocumentById(documentId, userId)!;
+  }
+
+  /**
+   * Toggle document starred status
+   */
+  static toggleStar(userId: string, documentId: string): DocumentRecord {
+    const db = getDatabase();
+    const doc = this.getDocumentById(documentId, userId);
+    if (!doc) throw new Error('DOCUMENT_NOT_FOUND');
+
+    const newStarred = doc.is_starred ? 0 : 1;
+    const now = new Date().toISOString();
+    db.prepare(`
+      UPDATE documents SET is_starred = ?, updated_at = ? WHERE id = ? AND owner_id = ?
+    `).run(newStarred, now, documentId, userId);
+
+    return this.getDocumentById(documentId, userId)!;
   }
 
   /**

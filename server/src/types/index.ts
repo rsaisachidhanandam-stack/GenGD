@@ -29,6 +29,8 @@ export interface DocumentRecord extends DocumentStructuredFields {
   current_version: number;
   created_at: string;
   updated_at: string;
+  deleted_at?: string | null;
+  is_starred?: number;
 }
 
 export interface DocumentVersion extends DocumentStructuredFields {

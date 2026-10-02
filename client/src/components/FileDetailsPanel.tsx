@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   FileText,
   Clock,
@@ -8,7 +7,10 @@ import {
   Cpu,
   User,
   X,
-  ExternalLink
+  ExternalLink,
+  Trash2,
+  RotateCcw,
+  Star
 } from 'lucide-react';
 import { type CachedDocument } from '../services/indexedDbStorage';
 
@@ -20,6 +22,12 @@ interface FileDetailsPanelProps {
   onOpenSyncLab: () => void;
   hasConflict: boolean;
   versionCount: number;
+  ownerName?: string;
+  deviceNames?: string[];
+  onDeleteDoc?: (docId: string) => Promise<void>;
+  onRestoreDoc?: (docId: string) => Promise<void>;
+  onToggleStar?: (docId: string) => Promise<void>;
+  isTrash?: boolean;
 }
 
 export const FileDetailsPanel: React.FC<FileDetailsPanelProps> = ({
@@ -29,7 +37,13 @@ export const FileDetailsPanel: React.FC<FileDetailsPanelProps> = ({
   onOpenHistory,
   onOpenSyncLab,
   hasConflict,
-  versionCount
+  versionCount,
+  ownerName = 'Alex Rivera',
+  deviceNames = ['MacBook Pro', 'Pixel 8 Pro'],
+  onDeleteDoc,
+  onRestoreDoc,
+  onToggleStar,
+  isTrash = false
 }) => {
   if (!document) {
     return (
@@ -200,14 +214,16 @@ export const FileDetailsPanel: React.FC<FileDetailsPanelProps> = ({
             <span style={{ color: 'var(--text-secondary)' }}>Owner</span>
             <span style={{ color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 500 }}>
               <User size={13} color="var(--accent-blue)" />
-              <span>Alex Rivera</span>
+              <span>{ownerName}</span>
             </span>
           </div>
 
           {/* Synchronized Devices */}
           <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '7px' }}>
             <span style={{ color: 'var(--text-secondary)' }}>Synchronized Devices</span>
-            <span style={{ color: 'var(--text-primary)', fontSize: '0.78rem', fontWeight: 500 }}>MacBook, Pixel 8</span>
+            <span style={{ color: 'var(--text-primary)', fontSize: '0.78rem', fontWeight: 500 }}>
+              {deviceNames.length > 0 ? deviceNames.join(', ') : 'MacBook Pro, Pixel 8 Pro'}
+            </span>
           </div>
 
           {/* Last Modified */}
@@ -228,8 +244,27 @@ export const FileDetailsPanel: React.FC<FileDetailsPanelProps> = ({
         </div>
       </div>
 
-      {/* Actions: Version History & Sync Lab */}
+      {/* Actions Section */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: 'auto', paddingTop: '16px', borderTop: '1px solid var(--border-subtle)' }}>
+        {/* Star / Unstar Button */}
+        {onToggleStar && !isTrash && !document.deleted_at && (
+          <button
+            className="btn btn-outline btn-sm"
+            onClick={() => onToggleStar(document.id)}
+            style={{
+              width: '100%',
+              justifyContent: 'flex-start',
+              gap: '8px',
+              color: document.is_starred ? '#d97706' : 'var(--text-secondary)',
+              borderColor: document.is_starred ? 'rgba(245, 158, 11, 0.4)' : 'var(--border-subtle)'
+            }}
+          >
+            <Star size={14} fill={document.is_starred ? '#f59e0b' : 'none'} color={document.is_starred ? '#f59e0b' : 'currentColor'} />
+            <span>{document.is_starred ? 'Starred' : 'Add to Starred'}</span>
+          </button>
+        )}
+
+        {/* Version History Button */}
         <button
           className="btn btn-secondary btn-sm"
           onClick={onOpenHistory}
@@ -239,6 +274,7 @@ export const FileDetailsPanel: React.FC<FileDetailsPanelProps> = ({
           <span>Version History · V{document.current_version || 1}{versionCount > 0 ? ` (${versionCount} revs)` : ''}</span>
         </button>
 
+        {/* Sync Lab Button */}
         <button
           className="btn btn-outline btn-sm"
           onClick={onOpenSyncLab}
@@ -253,6 +289,47 @@ export const FileDetailsPanel: React.FC<FileDetailsPanelProps> = ({
           <Cpu size={14} />
           <span>Inspect in Sync Lab</span>
         </button>
+
+        {/* Move to Trash OR Restore File Button */}
+        {isTrash || document.deleted_at ? (
+          onRestoreDoc && (
+            <button
+              className="btn btn-primary btn-sm"
+              onClick={() => onRestoreDoc(document.id)}
+              style={{
+                width: '100%',
+                justifyContent: 'flex-start',
+                gap: '8px',
+                background: '#059669',
+                borderColor: '#059669'
+              }}
+            >
+              <RotateCcw size={14} />
+              <span>Restore from Trash</span>
+            </button>
+          )
+        ) : (
+          onDeleteDoc && (
+            <button
+              className="btn btn-outline btn-sm"
+              onClick={() => {
+                if (window.confirm(`Move "${document.name || document.title}" to Trash? Version history will be safely preserved.`)) {
+                  onDeleteDoc(document.id);
+                }
+              }}
+              style={{
+                width: '100%',
+                justifyContent: 'flex-start',
+                gap: '8px',
+                color: '#dc2626',
+                borderColor: 'rgba(239, 68, 68, 0.3)'
+              }}
+            >
+              <Trash2 size={14} />
+              <span>Move to Trash</span>
+            </button>
+          )
+        )}
       </div>
     </aside>
   );
