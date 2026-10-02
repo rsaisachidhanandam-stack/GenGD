@@ -101,7 +101,8 @@ router.post('/', authenticateToken, (req: AuthenticatedRequest, res: Response) =
 // GET /api/documents/:id - Fetch authorized document
 router.get('/:id', authenticateToken, (req: AuthenticatedRequest, res: Response) => {
   const docId = String(req.params.id);
-  const doc = SyncEngine.getDocumentById(docId, req.user!.id);
+  const includeDeleted = req.query.include_deleted === 'true' || req.query.trash === 'true';
+  const doc = SyncEngine.getDocumentById(docId, req.user!.id, includeDeleted);
   if (!doc) {
     // Return 404 with no metadata leakage (SEC01)
     res.status(404).json({ error: 'Document not found or access denied' });
