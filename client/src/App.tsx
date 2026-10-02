@@ -8,6 +8,7 @@ import { ConflictsView } from './components/ConflictsView';
 import { SyncLabView } from './components/SyncLabView';
 import { SettingsView } from './components/SettingsView';
 import { NewDocumentModal } from './components/NewDocumentModal';
+import { UploadDocumentModal } from './components/UploadDocumentModal';
 import { AuthModal } from './components/AuthModal';
 
 import { ConflictResolverModal } from './components/ConflictResolverModal';
@@ -101,6 +102,7 @@ export function App() {
   const [isResetting, setIsResetting] = useState(false);
   const [resolvingConflict, setResolvingConflict] = useState(false);
   const [showNewDocModal, setShowNewDocModal] = useState(false);
+  const [showUploadModal, setShowUploadModal] = useState(false);
 
   // Active Modals
   const [activeConflict, setActiveConflict] = useState<any | null>(null);
@@ -545,9 +547,27 @@ export function App() {
     }
   };
 
-  // Handle Delete (Move to Trash)
+  // Handle Document Upload (Import .md or .txt with Version 1 lineage)
+  const handleUploadDocument = async (name: string, title: string, status: any, description: string, content: string) => {
+    await handleCreateDocument(name, title, status, description, content);
+    notify('success', `Uploaded "${name}" as Version 1.`);
+  };
+
+  // Handle Delete (Move to Trash with optimistic UI update)
   const handleDeleteDocument = async (docId: string) => {
     if (!token) return;
+    const docToDelete = documents.find(d => d.id === docId);
+    // Instant optimistic removal from UI
+    setDocuments(prev => prev.filter(d => d.id !== docId));
+    if (selectedDocId === docId) {
+      setSelectedDocId(null);
+      setShowDetailsPanel(false);
+    }
+    if (activeDocument?.id === docId) {
+      setActiveDocument(null);
+      setActiveTab('drive');
+    }
+
     try {
       const res = await fetch(`${API_BASE_URL}/api/documents/${docId}`, {
         method: 'DELETE',
@@ -557,15 +577,15 @@ export function App() {
         notify('info', 'Document moved to Trash (version history preserved).');
         await fetchDocumentsList();
         await fetchTrashList();
-        if (selectedDocId === docId) {
-          setSelectedDocId(null);
-        }
-        if (activeDocument?.id === docId) {
-          setActiveDocument(null);
-          setActiveTab('drive');
-        }
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || 'Failed to move document to Trash');
       }
     } catch (err: any) {
+      // Revert on error
+      if (docToDelete) {
+        setDocuments(prev => [docToDelete, ...prev]);
+      }
       notify('error', `Failed to delete document: ${err.message}`);
     }
   };
@@ -573,6 +593,9 @@ export function App() {
   // Handle Restore from Trash
   const handleRestoreDocument = async (docId: string) => {
     if (!token) return;
+    const docToRestore = trashDocuments.find(d => d.id === docId);
+    setTrashDocuments(prev => prev.filter(d => d.id !== docId));
+
     try {
       const res = await fetch(`${API_BASE_URL}/api/documents/${docId}/restore`, {
         method: 'POST',
@@ -583,8 +606,14 @@ export function App() {
         await fetchDocumentsList();
         await fetchTrashList();
         setSelectedDocId(docId);
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || 'Failed to restore document');
       }
     } catch (err: any) {
+      if (docToRestore) {
+        setTrashDocuments(prev => [docToRestore, ...prev]);
+      }
       notify('error', `Failed to restore document: ${err.message}`);
     }
   };
@@ -783,10 +812,11 @@ export function App() {
     }
   }, [showQueueModalDevice, currentQueueDeviceCoordinator]);
 
-  // Selected document object for FileDetailsPanel
+  // Selected document object for FileDetailsPanel (supports both active drive docs and trash docs)
   const selectedDocument = useMemo(() => {
-    return documents.find(d => d.id === selectedDocId) || activeDocument;
-  }, [documents, selectedDocId, activeDocument]);
+    const list = activeTab === 'trash' ? trashDocuments : documents;
+    return list.find(d => d.id === selectedDocId) || (activeTab === 'trash' ? null : activeDocument);
+  }, [activeTab, documents, trashDocuments, selectedDocId, activeDocument]);
 
   // ROOT AUTHENTICATION SCREEN: If unauthenticated (no token), render ONLY the authentication view
   if (!token) {
@@ -909,6 +939,7 @@ export function App() {
                     setActiveTab('document');
                   }}
                   onOpenNewDocument={() => setShowNewDocModal(true)}
+                  onOpenUploadDocument={() => setShowUploadModal(true)}
                   searchQuery={searchQuery}
                   versions={versions}
                   conflicts={conflicts}
@@ -959,6 +990,7 @@ export function App() {
                     setActiveTab('document');
                   }}
                   onOpenNewDocument={() => setShowNewDocModal(true)}
+                  onOpenUploadDocument={() => setShowUploadModal(true)}
                   searchQuery={searchQuery}
                   versions={versions}
                   conflicts={conflicts}
@@ -1012,6 +1044,7 @@ export function App() {
                     setActiveTab('document');
                   }}
                   onOpenNewDocument={() => setShowNewDocModal(true)}
+                  onOpenUploadDocument={() => setShowUploadModal(true)}
                   searchQuery={searchQuery}
                   versions={versions}
                   conflicts={conflicts}
@@ -1169,6 +1202,14 @@ export function App() {
         isOpen={showNewDocModal}
         onClose={() => setShowNewDocModal(false)}
         onCreateDocument={handleCreateDocument}
+      />
+
+      {/* Upload Document Modal */}
+      <UploadDocumentModal
+        isOpen={showUploadModal}
+        onClose={() => setShowUploadModal(false)}
+        onUploadDocument={handleUploadDocument}
+        isOnline={laptopCoordinator.isOnline && serverOnline}
       />
 
       {/* Conflict Resolver Modal (Existing & Preserved) */}

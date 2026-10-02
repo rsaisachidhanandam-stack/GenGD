@@ -180,7 +180,9 @@ export const FileDetailsPanel: React.FC<FileDetailsPanelProps> = ({
           {/* File Type */}
           <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '7px' }}>
             <span style={{ color: 'var(--text-secondary)' }}>File Type</span>
-            <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>Markdown (.md)</span>
+            <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>
+              {document.name && document.name.toLowerCase().endsWith('.txt') ? 'Text Document (.txt)' : 'Markdown (.md)'}
+            </span>
           </div>
 
           {/* Current Version */}
@@ -312,11 +314,7 @@ export const FileDetailsPanel: React.FC<FileDetailsPanelProps> = ({
           onDeleteDoc && (
             <button
               className="btn btn-outline btn-sm"
-              onClick={() => {
-                if (window.confirm(`Move "${document.name || document.title}" to Trash? Version history will be safely preserved.`)) {
-                  onDeleteDoc(document.id);
-                }
-              }}
+              onClick={() => onDeleteDoc(document.id)}
               style={{
                 width: '100%',
                 justifyContent: 'flex-start',

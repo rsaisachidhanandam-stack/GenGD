@@ -151,8 +151,8 @@ export class SyncEngine {
    */
   static getVersionHistory(documentId: string, userId: string): DocumentVersion[] {
     const db = getDatabase();
-    // Verify ownership
-    const doc = this.getDocumentById(documentId, userId);
+    // Verify ownership (including soft-deleted documents in Trash)
+    const doc = this.getDocumentById(documentId, userId, true);
     if (!doc) throw new Error('Document not found or access denied');
 
     return db.prepare(`
@@ -165,7 +165,7 @@ export class SyncEngine {
    */
   static getVersionSnapshot(documentId: string, versionNumber: number, userId: string): DocumentVersion | null {
     const db = getDatabase();
-    const doc = this.getDocumentById(documentId, userId);
+    const doc = this.getDocumentById(documentId, userId, true);
     if (!doc) throw new Error('Document not found or access denied');
 
     const version = db.prepare(`

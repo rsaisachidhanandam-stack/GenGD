@@ -13,7 +13,8 @@ import {
   RefreshCw,
   Trash2,
   RotateCcw,
-  Star
+  Star,
+  UploadCloud
 } from 'lucide-react';
 import { type CachedDocument } from '../services/indexedDbStorage';
 
@@ -23,6 +24,7 @@ interface DriveViewProps {
   onSelectDoc: (doc: CachedDocument) => void;
   onOpenDoc: (doc: CachedDocument) => void;
   onOpenNewDocument: () => void;
+  onOpenUploadDocument?: () => void;
   searchQuery: string;
   versions: any[];
   conflicts: any[];
@@ -43,6 +45,7 @@ export const DriveView: React.FC<DriveViewProps> = ({
   onSelectDoc,
   onOpenDoc,
   onOpenNewDocument,
+  onOpenUploadDocument,
   searchQuery,
   versions,
   conflicts,
@@ -165,16 +168,37 @@ export const DriveView: React.FC<DriveViewProps> = ({
           </p>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           {/* New Document Button */}
           <button
             className="btn btn-primary btn-sm"
             onClick={onOpenNewDocument}
             style={{ padding: '7px 14px', borderRadius: 'var(--radius-md)' }}
+            title="Create new markdown document"
           >
             <Plus size={16} strokeWidth={2.5} />
             <span>New Document</span>
           </button>
+
+          {/* Upload Document Button */}
+          {onOpenUploadDocument && (
+            <button
+              className="btn btn-outline btn-sm"
+              onClick={onOpenUploadDocument}
+              style={{
+                padding: '7px 14px',
+                borderRadius: 'var(--radius-md)',
+                borderColor: 'var(--border-medium)',
+                background: '#ffffff',
+                color: 'var(--text-primary)',
+                gap: '6px'
+              }}
+              title="Upload existing .md or .txt document"
+            >
+              <UploadCloud size={15} color="#2563eb" />
+              <span>Upload Document</span>
+            </button>
+          )}
 
           {/* Sort Dropdown */}
           <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
@@ -431,7 +455,7 @@ export const DriveView: React.FC<DriveViewProps> = ({
                     {doc.status || 'draft'}
                   </span>
                   <span style={{ color: 'var(--text-secondary)', fontSize: '0.72rem', fontWeight: 500 }}>
-                    Markdown (.md)
+                    {doc.name && doc.name.toLowerCase().endsWith('.txt') ? 'Text (.txt)' : 'Markdown (.md)'}
                   </span>
                 </div>
 
@@ -482,9 +506,7 @@ export const DriveView: React.FC<DriveViewProps> = ({
                             className="btn btn-ghost btn-sm"
                             onClick={(e) => {
                               e.stopPropagation();
-                              if (window.confirm(`Move "${doc.name || doc.title}" to Trash? Version history will be preserved.`)) {
-                                onDeleteDoc(doc.id);
-                              }
+                              onDeleteDoc(doc.id);
                             }}
                             style={{ padding: '3px 6px', color: '#ef4444' }}
                             title="Move to Trash"
@@ -638,9 +660,7 @@ export const DriveView: React.FC<DriveViewProps> = ({
                                 className="btn btn-ghost btn-sm"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  if (window.confirm(`Move "${doc.name || doc.title}" to Trash? Version history will be preserved.`)) {
-                                    onDeleteDoc(doc.id);
-                                  }
+                                  onDeleteDoc(doc.id);
                                 }}
                                 style={{ padding: '4px 6px', color: '#ef4444' }}
                                 title="Move to Trash"
