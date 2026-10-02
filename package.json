@@ -9,6 +9,8 @@
     "build:client": "npm run build --prefix client",
     "build": "npm run build:server && npm run build:client",
     "test": "npm test --prefix server",
+    "verify:e2e": "npx tsx server/scripts/verify_e2e_flow.ts",
+    "verify:audit": "npx tsx server/scripts/verify_audit_phases.ts",
     "start": "node server/dist/index.js"
   },
   "keywords": [
