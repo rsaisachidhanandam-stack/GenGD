@@ -36,10 +36,53 @@ const ResolveConflictSchema = z.object({
   })
 });
 
-// GET /api/documents - List documents for current user
+// GET /api/documents - List documents for current user (supports trash=true, starred=true)
 router.get('/', authenticateToken, (req: AuthenticatedRequest, res: Response) => {
+  if (req.query.trash === 'true') {
+    const documents = SyncEngine.listTrashDocuments(req.user!.id);
+    res.json({ documents });
+    return;
+  }
+  if (req.query.starred === 'true') {
+    const documents = SyncEngine.listStarredDocuments(req.user!.id);
+    res.json({ documents });
+    return;
+  }
   const documents = SyncEngine.listDocuments(req.user!.id);
   res.json({ documents });
+});
+
+// DELETE /api/documents/:id - Soft-delete document (moves to Trash preserving version history)
+router.delete('/:id', authenticateToken, (req: AuthenticatedRequest, res: Response) => {
+  const docId = String(req.params.id);
+  try {
+    const result = SyncEngine.deleteDocument(req.user!.id, docId);
+    res.json(result);
+  } catch (err: any) {
+    res.status(404).json({ error: 'Document not found or access denied' });
+  }
+});
+
+// POST /api/documents/:id/restore - Restore soft-deleted document from Trash
+router.post('/:id/restore', authenticateToken, (req: AuthenticatedRequest, res: Response) => {
+  const docId = String(req.params.id);
+  try {
+    const document = SyncEngine.restoreDocument(req.user!.id, docId);
+    res.json({ document });
+  } catch (err: any) {
+    res.status(404).json({ error: 'Document not found or access denied' });
+  }
+});
+
+// POST /api/documents/:id/star - Toggle starred status
+router.post('/:id/star', authenticateToken, (req: AuthenticatedRequest, res: Response) => {
+  const docId = String(req.params.id);
+  try {
+    const document = SyncEngine.toggleStar(req.user!.id, docId);
+    res.json({ document });
+  } catch (err: any) {
+    res.status(404).json({ error: 'Document not found or access denied' });
+  }
 });
 
 // POST /api/documents - Create new document

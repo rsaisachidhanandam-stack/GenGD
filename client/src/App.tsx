@@ -18,7 +18,8 @@ import { QuickGuideModal } from './components/QuickGuideModal';
 
 import { ClientSyncCoordinator, type SyncStatusState } from './services/clientSyncCoordinator';
 import { type CachedDocument, type PendingQueueItem } from './services/indexedDbStorage';
-import { AlertTriangle, CheckCircle2, Trash2, Star } from 'lucide-react';
+import { AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { v4 as uuidv4 } from 'uuid';
 
 const API_BASE_URL = 'http://localhost:5000';
 
@@ -63,6 +64,8 @@ export function App() {
 
   // Documents & Selection with localStorage preservation
   const [documents, setDocuments] = useState<CachedDocument[]>([]);
+  const [trashDocuments, setTrashDocuments] = useState<CachedDocument[]>([]);
+  const [devices, setDevices] = useState<any[]>([]);
   const [activeDocument, setActiveDocument] = useState<CachedDocument | null>(null);
   const [selectedDocId, setSelectedDocId] = useState<string | null>(() => {
     try {
@@ -237,7 +240,47 @@ export function App() {
     }
   }, [token, selectedDocId, activeDocument, handleAuthExpiry]);
 
-  // Refresh active document, versions, and conflicts
+  // Fetch soft-deleted documents from trash
+  const fetchTrashList = useCallback(async (authToken?: string) => {
+    const currentToken = authToken || token;
+    if (!currentToken) return;
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/documents?trash=true`, {
+        headers: { Authorization: `Bearer ${currentToken}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.documents)) {
+          setTrashDocuments(data.documents);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to fetch trash list:', err);
+    }
+  }, [token]);
+
+  // Fetch registered devices for the current user
+  const fetchDevices = useCallback(async (authToken?: string) => {
+    const currentToken = authToken || token;
+    if (!currentToken) return;
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/devices`, {
+        headers: { Authorization: `Bearer ${currentToken}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.devices)) {
+          setDevices(data.devices);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to fetch devices:', err);
+    }
+  }, [token]);
+
+  // Refresh active document, versions, conflicts, trash, and devices
   const refreshDocumentData = useCallback(async (docId?: string, authToken?: string) => {
     const currentDocId = docId || activeDocument?.id || selectedDocId;
     const currentToken = authToken || token;
@@ -295,14 +338,16 @@ export function App() {
         }
       }
 
-      // Refresh documents list
+      // Refresh documents list, trash list, and registered devices
       await fetchDocumentsList(currentToken);
+      await fetchTrashList(currentToken);
+      await fetchDevices(currentToken);
     } catch (err) {
       console.error('Failed to refresh document data:', err);
     } finally {
       setIsLoadingDocs(false);
     }
-  }, [activeDocument?.id, selectedDocId, token, fetchDocumentsList, handleAuthExpiry]);
+  }, [activeDocument?.id, selectedDocId, token, fetchDocumentsList, fetchTrashList, fetchDevices, handleAuthExpiry]);
 
   // Verify existing saved session in background
   const initApp = useCallback(async () => {
@@ -364,6 +409,13 @@ export function App() {
     return () => clearInterval(interval);
   }, [token, refreshDocumentData]);
 
+  // Fetch trash list when opening trash tab
+  useEffect(() => {
+    if (activeTab === 'trash' && token) {
+      fetchTrashList();
+    }
+  }, [activeTab, token, fetchTrashList]);
+
   // Handle Reset Demo
   const handleResetDemo = async () => {
     setIsResetting(true);
@@ -401,50 +453,160 @@ export function App() {
     }
   };
 
-  // Handle Create Real Document
+  // Handle Create Real Document (with offline creation support)
   const handleCreateDocument = async (name: string, title: string, status: any, description: string, content: string) => {
-    if (!token) {
-      handleAuthExpiry('Please sign in to create a document.');
-      throw new Error('Not authenticated');
-    }
+    const docId = uuidv4();
+    const now = new Date().toISOString();
+    const offlineDoc: CachedDocument = {
+      id: docId,
+      owner_id: user?.id || 'demo-user-id',
+      name,
+      title,
+      status,
+      description,
+      content,
+      current_version: 1,
+      updated_at: now,
+      isLocallyModified: true
+    };
 
-    const res = await fetch(`${API_BASE_URL}/api/documents`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
-      },
-      body: JSON.stringify({
-        name,
+    // If offline or disconnected, create locally in IndexedDB and queue
+    if (!token || !laptopCoordinator.isOnline) {
+      await laptopCoordinator.storage.saveDocument(offlineDoc);
+      await laptopCoordinator.storage.enqueueChange({
+        changeId: uuidv4(),
+        documentId: docId,
         deviceId: 'device-laptop-001',
-        fields: { title, status, description, content }
-      })
-    });
-
-    if (res.status === 401) {
-      handleAuthExpiry('Your session has expired. Please sign in again.');
-      throw new Error('User associated with token no longer exists. Please sign in again.');
+        baseVersion: 0,
+        payload: { title, status, description, content },
+        timestamp: now,
+        status: 'pending',
+        retryCount: 0,
+        lastError: null
+      });
+      setDocuments(prev => [offlineDoc, ...prev]);
+      setActiveDocument(offlineDoc);
+      setSelectedDocId(docId);
+      setActiveTab('document');
+      notify('info', `Created "${name}" offline. Saved locally — pending sync.`);
+      return;
     }
 
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.error || 'Failed to create document');
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/documents`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          name,
+          deviceId: 'device-laptop-001',
+          fields: { title, status, description, content }
+        })
+      });
+
+      if (res.status === 401) {
+        handleAuthExpiry('Your session has expired. Please sign in again.');
+        throw new Error('User associated with token no longer exists. Please sign in again.');
+      }
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Failed to create document');
+      }
+
+      const data = await res.json();
+      const createdDoc = data.document;
+
+      // Cache locally in both coordinators
+      await laptopCoordinator.storage.saveDocument(createdDoc);
+      await mobileCoordinator.storage.saveDocument(createdDoc);
+
+      // Refresh list and activate new document
+      await fetchDocumentsList();
+      setActiveDocument(createdDoc);
+      setSelectedDocId(createdDoc.id);
+      setActiveTab('document');
+
+      notify('success', `Created "${createdDoc.name}" with Version 1 lineage.`);
+    } catch (networkErr: any) {
+      // Automatic fallback to offline storage if server unreachable
+      if (!laptopCoordinator.isOnline || networkErr.message.includes('fetch') || networkErr.message.includes('network')) {
+        await laptopCoordinator.storage.saveDocument(offlineDoc);
+        setDocuments(prev => [offlineDoc, ...prev]);
+        setActiveDocument(offlineDoc);
+        setSelectedDocId(docId);
+        setActiveTab('document');
+        notify('info', `Saved "${name}" locally in offline queue.`);
+        return;
+      }
+      throw networkErr;
     }
+  };
 
-    const data = await res.json();
-    const createdDoc = data.document;
+  // Handle Delete (Move to Trash)
+  const handleDeleteDocument = async (docId: string) => {
+    if (!token) return;
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/documents/${docId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        notify('info', 'Document moved to Trash (version history preserved).');
+        await fetchDocumentsList();
+        await fetchTrashList();
+        if (selectedDocId === docId) {
+          setSelectedDocId(null);
+        }
+        if (activeDocument?.id === docId) {
+          setActiveDocument(null);
+          setActiveTab('drive');
+        }
+      }
+    } catch (err: any) {
+      notify('error', `Failed to delete document: ${err.message}`);
+    }
+  };
 
-    // Cache locally
-    await laptopCoordinator.storage.saveDocument(createdDoc);
-    await mobileCoordinator.storage.saveDocument(createdDoc);
+  // Handle Restore from Trash
+  const handleRestoreDocument = async (docId: string) => {
+    if (!token) return;
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/documents/${docId}/restore`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        notify('success', 'Document restored from Trash.');
+        await fetchDocumentsList();
+        await fetchTrashList();
+        setSelectedDocId(docId);
+      }
+    } catch (err: any) {
+      notify('error', `Failed to restore document: ${err.message}`);
+    }
+  };
 
-    // Refresh list and activate new document
-    await fetchDocumentsList();
-    setActiveDocument(createdDoc);
-    setSelectedDocId(createdDoc.id);
-    setActiveTab('document');
-
-    notify('success', `Created "${createdDoc.name}" with Version 1 lineage.`);
+  // Handle Toggle Star
+  const handleToggleStar = async (docId: string) => {
+    if (!token) return;
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/documents/${docId}/star`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setDocuments(prev => prev.map(d => d.id === docId ? { ...d, is_starred: data.document.is_starred } : d));
+        if (activeDocument?.id === docId) {
+          setActiveDocument(prev => prev ? { ...prev, is_starred: data.document.is_starred } : null);
+        }
+      }
+    } catch (err: any) {
+      notify('error', `Failed to toggle star: ${err.message}`);
+    }
   };
 
   // Handle Conflict Resolution
@@ -751,6 +913,8 @@ export function App() {
                   versions={versions}
                   conflicts={conflicts}
                   isLoading={isLoadingDocs}
+                  onDeleteDoc={handleDeleteDocument}
+                  onToggleStar={handleToggleStar}
                 />
               </div>
 
@@ -767,6 +931,12 @@ export function App() {
                   onOpenSyncLab={() => setActiveTab('sync-lab')}
                   hasConflict={conflicts.some(c => c.document_id === selectedDocument?.id)}
                   versionCount={versions.length}
+                  ownerName={user?.name || 'Alex Rivera'}
+                  deviceNames={devices.map(d => d.device_name)}
+                  onDeleteDoc={handleDeleteDocument}
+                  onRestoreDoc={handleRestoreDocument}
+                  onToggleStar={handleToggleStar}
+                  isTrash={false}
                 />
               )}
             </div>
@@ -797,24 +967,84 @@ export function App() {
                   emptyTitle="No recent activity"
                   emptySubtitle="Documents created or edited recently will appear here."
                   isLoading={isLoadingDocs}
+                  onDeleteDoc={handleDeleteDocument}
+                  onToggleStar={handleToggleStar}
                 />
               </div>
+
+              {showDetailsPanel && (
+                <FileDetailsPanel
+                  document={selectedDocument}
+                  onClose={() => setShowDetailsPanel(false)}
+                  onOpenDoc={(doc) => {
+                    setActiveDocument(doc);
+                    setActiveTab('document');
+                  }}
+                  onOpenHistory={() => setShowHistoryModal(true)}
+                  onOpenSyncLab={() => setActiveTab('sync-lab')}
+                  hasConflict={conflicts.some(c => c.document_id === selectedDocument?.id)}
+                  versionCount={versions.length}
+                  ownerName={user?.name || 'Alex Rivera'}
+                  deviceNames={devices.map(d => d.device_name)}
+                  onDeleteDoc={handleDeleteDocument}
+                  onRestoreDoc={handleRestoreDocument}
+                  onToggleStar={handleToggleStar}
+                  isTrash={false}
+                />
+              )}
             </div>
           )}
 
-          {/* View: Starred */}
+          {/* View: Starred (Real Dynamic View) */}
           {activeTab === 'starred' && (
-            <div style={{ padding: '60px 20px', textAlign: 'center' }}>
-              <Star size={40} color="#fbbf24" style={{ margin: '0 auto 12px' }} />
-              <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                Starred Documents
-              </h3>
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '4px', maxWidth: '360px', margin: '4px auto 16px' }}>
-                Star important documents in My Drive to access them quickly here.
-              </p>
-              <button className="btn btn-outline btn-sm" onClick={() => setActiveTab('drive')}>
-                Go to My Drive
-              </button>
+            <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+              <div style={{ flex: 1, overflowY: 'auto' }}>
+                <DriveView
+                  documents={documents.filter(d => Boolean(d.is_starred))}
+                  selectedDocId={selectedDocId}
+                  onSelectDoc={(doc) => {
+                    setSelectedDocId(doc.id);
+                    setShowDetailsPanel(true);
+                  }}
+                  onOpenDoc={(doc) => {
+                    setActiveDocument(doc);
+                    setSelectedDocId(doc.id);
+                    setActiveTab('document');
+                  }}
+                  onOpenNewDocument={() => setShowNewDocModal(true)}
+                  searchQuery={searchQuery}
+                  versions={versions}
+                  conflicts={conflicts}
+                  title="Starred"
+                  subtitle="Quick access to important starred documents"
+                  emptyTitle="No starred documents"
+                  emptySubtitle="Star important documents to access them quickly here."
+                  isLoading={isLoadingDocs}
+                  onDeleteDoc={handleDeleteDocument}
+                  onToggleStar={handleToggleStar}
+                />
+              </div>
+
+              {showDetailsPanel && (
+                <FileDetailsPanel
+                  document={selectedDocument}
+                  onClose={() => setShowDetailsPanel(false)}
+                  onOpenDoc={(doc) => {
+                    setActiveDocument(doc);
+                    setActiveTab('document');
+                  }}
+                  onOpenHistory={() => setShowHistoryModal(true)}
+                  onOpenSyncLab={() => setActiveTab('sync-lab')}
+                  hasConflict={conflicts.some(c => c.document_id === selectedDocument?.id)}
+                  versionCount={versions.length}
+                  ownerName={user?.name || 'Alex Rivera'}
+                  deviceNames={devices.map(d => d.device_name)}
+                  onDeleteDoc={handleDeleteDocument}
+                  onRestoreDoc={handleRestoreDocument}
+                  onToggleStar={handleToggleStar}
+                  isTrash={false}
+                />
+              )}
             </div>
           )}
 
@@ -830,16 +1060,54 @@ export function App() {
             </div>
           )}
 
-          {/* View: Trash */}
+          {/* View: Trash (Real Soft-Deleted Documents with Restore) */}
           {activeTab === 'trash' && (
-            <div style={{ padding: '60px 20px', textAlign: 'center' }}>
-              <Trash2 size={40} color="var(--text-muted)" style={{ margin: '0 auto 12px' }} />
-              <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                Trash is Empty
-              </h3>
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-                No deleted documents. All files are safely preserved.
-              </p>
+            <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+              <div style={{ flex: 1, overflowY: 'auto' }}>
+                <DriveView
+                  documents={trashDocuments}
+                  selectedDocId={selectedDocId}
+                  onSelectDoc={(doc) => {
+                    setSelectedDocId(doc.id);
+                    setShowDetailsPanel(true);
+                  }}
+                  onOpenDoc={(doc) => {
+                    setActiveDocument(doc);
+                    setSelectedDocId(doc.id);
+                    setActiveTab('document');
+                  }}
+                  onOpenNewDocument={() => setShowNewDocModal(true)}
+                  searchQuery={searchQuery}
+                  versions={versions}
+                  conflicts={conflicts}
+                  title="Trash"
+                  subtitle="Deleted files (soft-deleted with full version history preserved)"
+                  emptyTitle="Trash is empty"
+                  emptySubtitle="Files moved to trash will appear here and can be restored."
+                  isLoading={isLoadingDocs}
+                  onRestoreDoc={handleRestoreDocument}
+                  isTrash={true}
+                />
+              </div>
+
+              {showDetailsPanel && (
+                <FileDetailsPanel
+                  document={selectedDocument}
+                  onClose={() => setShowDetailsPanel(false)}
+                  onOpenDoc={(doc) => {
+                    setActiveDocument(doc);
+                    setActiveTab('document');
+                  }}
+                  onOpenHistory={() => setShowHistoryModal(true)}
+                  onOpenSyncLab={() => setActiveTab('sync-lab')}
+                  hasConflict={conflicts.some(c => c.document_id === selectedDocument?.id)}
+                  versionCount={versions.length}
+                  ownerName={user?.name || 'Alex Rivera'}
+                  deviceNames={devices.map(d => d.device_name)}
+                  onRestoreDoc={handleRestoreDocument}
+                  isTrash={true}
+                />
+              )}
             </div>
           )}
 

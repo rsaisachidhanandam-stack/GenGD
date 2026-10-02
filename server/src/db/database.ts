@@ -87,6 +87,8 @@ export function initSchema(db: Database.Database): void {
       content TEXT NOT NULL DEFAULT '',
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      deleted_at DATETIME DEFAULT NULL,
+      is_starred INTEGER DEFAULT 0,
       FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE
     );
 
@@ -142,4 +144,12 @@ export function initSchema(db: Database.Database): void {
     CREATE INDEX IF NOT EXISTS idx_changes_doc ON changes(document_id);
     CREATE INDEX IF NOT EXISTS idx_conflicts_doc_status ON conflicts(document_id, status);
   `);
+
+  // Safe migrations for existing databases
+  try {
+    db.exec(`ALTER TABLE documents ADD COLUMN deleted_at DATETIME DEFAULT NULL;`);
+  } catch (_) {}
+  try {
+    db.exec(`ALTER TABLE documents ADD COLUMN is_starred INTEGER DEFAULT 0;`);
+  } catch (_) {}
 }

@@ -28,6 +28,8 @@ export interface CachedDocument {
   content: string;
   updated_at: string;
   isLocallyModified?: boolean;
+  deleted_at?: string | null;
+  is_starred?: number;
 }
 
 const DB_VERSION = 1;
