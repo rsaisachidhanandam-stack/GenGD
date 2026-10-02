@@ -683,6 +683,10 @@ export function App() {
                   searchQuery={searchQuery}
                   versions={versions}
                   conflicts={conflicts}
+                  title="Recent"
+                  subtitle="Recently modified or synchronized documents"
+                  emptyTitle="No recent activity"
+                  emptySubtitle="Documents created or edited recently will appear here."
                 />
               </div>
             </div>

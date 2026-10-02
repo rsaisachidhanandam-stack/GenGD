@@ -169,7 +169,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             }}
           >
             <Sparkles size={16} />
-            <span>1-Click Demo Sign In (Alex Rivera)</span>
+            <span>Continue as Demo (Alex Rivera)</span>
           </button>
 
           <div style={{

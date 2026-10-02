@@ -22,6 +22,10 @@ interface DriveViewProps {
   searchQuery: string;
   versions: any[];
   conflicts: any[];
+  title?: string;
+  subtitle?: string;
+  emptyTitle?: string;
+  emptySubtitle?: string;
 }
 
 export const DriveView: React.FC<DriveViewProps> = ({
@@ -32,7 +36,11 @@ export const DriveView: React.FC<DriveViewProps> = ({
   onOpenNewDocument,
   searchQuery,
   versions,
-  conflicts
+  conflicts,
+  title = 'My Drive',
+  subtitle = 'Your files, synchronized safely across devices.',
+  emptyTitle = 'No documents found',
+  emptySubtitle = 'Create your first synchronized Markdown document to get started.'
 }) => {
   const [viewLayout, setViewLayout] = useState<'grid' | 'list'>('grid');
   const [sortBy, setSortBy] = useState<'date' | 'name' | 'version'>('date');
@@ -136,10 +144,10 @@ export const DriveView: React.FC<DriveViewProps> = ({
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
         <div>
           <h1 style={{ fontSize: '1.65rem', fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>
-            My Drive
+            {title}
           </h1>
           <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
-            Your files, synchronized safely across devices.
+            {subtitle}
           </p>
         </div>
 
@@ -275,10 +283,10 @@ export const DriveView: React.FC<DriveViewProps> = ({
         }}>
           <FolderOpen size={40} color="var(--text-muted)" style={{ margin: '0 auto 12px' }} />
           <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-            No documents found
+            {searchQuery ? 'No documents found' : emptyTitle}
           </h3>
           <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '4px', maxWidth: '360px', margin: '4px auto 16px' }}>
-            {searchQuery ? `No files matching "${searchQuery}"` : 'Create your first synchronized Markdown document to get started.'}
+            {searchQuery ? `No files matching "${searchQuery}"` : emptySubtitle}
           </p>
           <button className="btn btn-primary btn-sm" onClick={onOpenNewDocument}>
             <Plus size={14} />

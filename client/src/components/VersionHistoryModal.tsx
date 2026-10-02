@@ -125,7 +125,9 @@ export const VersionHistoryModal: React.FC<VersionHistoryModalProps> = ({
                       color: v.merge_type === 'auto_merged' ? '#34d399' :
                              v.merge_type === 'manual_resolution' ? '#c084fc' : 'var(--text-secondary)'
                     }}>
-                      {v.merge_type || 'direct'}
+                      {v.version_number === 1 ? 'Initial Version' :
+                       v.merge_type === 'auto_merged' ? 'Auto-Merge' :
+                       v.merge_type === 'manual_resolution' ? 'Manual Resolution' : 'Direct Edit'}
                     </span>
                   </div>
 
