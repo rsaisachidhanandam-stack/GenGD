@@ -4,7 +4,6 @@ import {
   X,
   Shield,
   FolderOpen,
-  Wifi,
   GitMerge,
   AlertTriangle,
   Cpu,
@@ -29,23 +28,24 @@ export const QuickGuideModal: React.FC<QuickGuideModalProps> = ({
   return (
     <div className="modal-overlay" style={{ zIndex: 2100 }} onClick={onClose}>
       <div
-        className="modal-content"
+        className="modal-content fade-in"
         onClick={(e) => e.stopPropagation()}
         style={{
-          maxWidth: '680px',
+          maxWidth: '720px',
           width: '100%',
-          maxHeight: '85vh',
+          maxHeight: '88vh',
           display: 'flex',
           flexDirection: 'column',
-          boxShadow: '0 25px 60px rgba(0, 0, 0, 0.85)',
-          border: '1px solid var(--border-medium)',
+          boxShadow: '0 20px 50px -10px rgba(15, 23, 42, 0.18)',
+          border: '1px solid var(--border-subtle)',
+          borderRadius: 'var(--radius-xl)',
           overflow: 'hidden'
         }}
       >
         {/* Modal Header */}
         <div style={{
           padding: '18px 24px',
-          background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%)',
+          background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.04) 0%, rgba(124, 58, 237, 0.04) 100%)',
           borderBottom: '1px solid var(--border-subtle)',
           display: 'flex',
           alignItems: 'center',
@@ -57,11 +57,11 @@ export const QuickGuideModal: React.FC<QuickGuideModalProps> = ({
               width: '36px',
               height: '36px',
               borderRadius: '10px',
-              background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+              background: 'linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)'
+              boxShadow: '0 4px 12px rgba(37, 99, 235, 0.25)'
             }}>
               <HelpCircle size={20} color="#ffffff" />
             </div>
@@ -76,8 +76,8 @@ export const QuickGuideModal: React.FC<QuickGuideModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="btn btn-ghost"
-            style={{ padding: '6px', borderRadius: 'var(--radius-md)', color: 'var(--text-secondary)' }}
+            className="btn btn-ghost btn-sm"
+            style={{ padding: '6px' }}
             title="Close Guide"
           >
             <X size={18} />
@@ -90,122 +90,85 @@ export const QuickGuideModal: React.FC<QuickGuideModalProps> = ({
           overflowY: 'auto',
           display: 'flex',
           flexDirection: 'column',
-          gap: '20px'
+          gap: '18px',
+          background: '#ffffff'
         }}>
-          {/* Section: Welcome to SyncSafe */}
+          {/* Section 1: What is SyncSafe? */}
           <div style={{
-            background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(139, 92, 246, 0.08) 100%)',
-            border: '1px solid rgba(59, 130, 246, 0.25)',
+            background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.06) 0%, rgba(124, 58, 237, 0.06) 100%)',
+            border: '1px solid rgba(37, 99, 235, 0.18)',
             borderRadius: 'var(--radius-lg)',
             padding: '16px 18px'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-              <Shield size={18} color="#60a5fa" />
-              <h3 style={{ fontSize: '0.98rem', fontWeight: 700, color: '#93c5fd' }}>
-                Welcome to SyncSafe (PS-13)
+              <Shield size={18} color="#2563eb" />
+              <h3 style={{ fontSize: '0.98rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                1. What is SyncSafe?
               </h3>
             </div>
             <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-              SyncSafe is a multi-device file synchronization system designed to prevent silent data loss when the same document is edited from different devices.
+              SyncSafe is an enterprise-grade multi-device file synchronization system solving <strong>Problem Statement PS-13: Same File, Multiple Devices</strong>. It provides transparent durability, semantic auto-merge, and zero silent data loss.
             </p>
             <div style={{
               marginTop: '10px',
               padding: '6px 12px',
-              background: 'rgba(59, 130, 246, 0.15)',
+              background: 'rgba(37, 99, 235, 0.08)',
+              border: '1px solid rgba(37, 99, 235, 0.18)',
               borderRadius: 'var(--radius-sm)',
               fontSize: '0.8rem',
-              fontWeight: 600,
-              color: '#bfdbfe',
+              fontWeight: 700,
+              color: '#2563eb',
               display: 'inline-block'
             }}>
-              Core Principle: "Never silently discard a user's change."
+              Core Rule: "Never silently discard a user's change."
             </div>
           </div>
 
-          {/* Section 1: My Drive */}
+          {/* Section 2: My Drive */}
           <div style={{
-            background: 'var(--bg-surface-elevated)',
+            background: '#ffffff',
             border: '1px solid var(--border-subtle)',
             borderRadius: 'var(--radius-md)',
-            padding: '16px'
+            padding: '16px',
+            boxShadow: 'var(--shadow-sm)'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-              <FolderOpen size={16} color="#60a5fa" />
-              <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                1. My Drive
+              <FolderOpen size={16} color="#2563eb" />
+              <h4 style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                2. My Drive
               </h4>
             </div>
             <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '10px' }}>
-              My Drive contains your synchronized Markdown documents.
+              My Drive organizes your synchronized Markdown documents and shows real-time revision lineage.
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ width: '20px', height: '20px', borderRadius: '50%', background: 'rgba(59, 130, 246, 0.2)', color: '#60a5fa', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.72rem' }}>1</span>
-                <span>Click <strong>+ New</strong> in the sidebar or drive header</span>
+                <span style={{ width: '20px', height: '20px', borderRadius: '50%', background: 'rgba(37, 99, 235, 0.1)', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.72rem' }}>1</span>
+                <span>Click <strong>+ New</strong> to create a new synchronized Markdown document.</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ width: '20px', height: '20px', borderRadius: '50%', background: 'rgba(59, 130, 246, 0.2)', color: '#60a5fa', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.72rem' }}>2</span>
-                <span>Fill in name, title, status, description, and Markdown content</span>
+                <span style={{ width: '20px', height: '20px', borderRadius: '50%', background: 'rgba(37, 99, 235, 0.1)', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.72rem' }}>2</span>
+                <span>Double-click any card to open in the full editor.</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ width: '20px', height: '20px', borderRadius: '50%', background: 'rgba(59, 130, 246, 0.2)', color: '#60a5fa', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.72rem' }}>3</span>
-                <span>Open the document in the workspace</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ width: '20px', height: '20px', borderRadius: '50%', background: 'rgba(59, 130, 246, 0.2)', color: '#60a5fa', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.72rem' }}>4</span>
-                <span>Edit fields and click <strong>Save & Sync</strong> to publish Version 2</span>
+                <span style={{ width: '20px', height: '20px', borderRadius: '50%', background: 'rgba(37, 99, 235, 0.1)', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.72rem' }}>3</span>
+                <span>Use <strong>Save Locally</strong> for offline drafts, or <strong>Save & Sync</strong> to publish.</span>
               </div>
             </div>
           </div>
 
-          {/* Section 2: Sync Status */}
+          {/* Section 3: Offline Sync */}
           <div style={{
-            background: 'var(--bg-surface-elevated)',
+            background: '#ffffff',
             border: '1px solid var(--border-subtle)',
             borderRadius: 'var(--radius-md)',
-            padding: '16px'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-              <Wifi size={16} color="#34d399" />
-              <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                2. Real Sync Status Indicators
-              </h4>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.8rem' }}>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-                <span style={{ color: '#10b981', fontWeight: 700 }}>🟢 Synced:</span>
-                <span style={{ color: 'var(--text-secondary)' }}>The server has durably acknowledged and committed the change.</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-                <span style={{ color: '#f59e0b', fontWeight: 700 }}>🟡 Saved locally:</span>
-                <span style={{ color: 'var(--text-secondary)' }}>Change is safely stored in local IndexedDB waiting for upload.</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-                <span style={{ color: '#3b82f6', fontWeight: 700 }}>🔵 Syncing:</span>
-                <span style={{ color: 'var(--text-secondary)' }}>The client is actively transmitting mutations to the backend.</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-                <span style={{ color: '#f43f5e', fontWeight: 700 }}>🔴 Conflict Detected:</span>
-                <span style={{ color: 'var(--text-secondary)' }}>Two devices edited the same field concurrently. Safe preservation active.</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-                <span style={{ color: '#94a3b8', fontWeight: 700 }}>⚪ Offline:</span>
-                <span style={{ color: 'var(--text-secondary)' }}>Device is offline. Local edits continue seamlessly into IndexedDB.</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Section 3: Offline Editing */}
-          <div style={{
-            background: 'var(--bg-surface-elevated)',
-            border: '1px solid var(--border-subtle)',
-            borderRadius: 'var(--radius-md)',
-            padding: '16px'
+            padding: '16px',
+            boxShadow: 'var(--shadow-sm)'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
               <Database size={16} color="#f59e0b" />
-              <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                3. Offline Editing & Durable Queue
+              <h4 style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                3. Offline Sync & Durable Queue
               </h4>
             </div>
             <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '8px' }}>
@@ -215,12 +178,13 @@ export const QuickGuideModal: React.FC<QuickGuideModalProps> = ({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              background: 'rgba(0, 0, 0, 0.25)',
+              background: 'rgba(241, 245, 249, 0.9)',
               padding: '8px 14px',
               borderRadius: 'var(--radius-sm)',
               fontSize: '0.78rem',
               color: 'var(--text-primary)',
-              fontWeight: 600
+              fontWeight: 600,
+              border: '1px solid var(--border-subtle)'
             }}>
               <span>Edit</span>
               <ArrowRight size={13} color="var(--text-muted)" />
@@ -230,60 +194,62 @@ export const QuickGuideModal: React.FC<QuickGuideModalProps> = ({
               <ArrowRight size={13} color="var(--text-muted)" />
               <span>Reconnect</span>
               <ArrowRight size={13} color="var(--text-muted)" />
-              <span style={{ color: '#34d399' }}>Sync</span>
+              <span style={{ color: '#059669' }}>Sync</span>
             </div>
           </div>
 
-          {/* Section 4 & 5: Auto-Merge & Conflict */}
+          {/* Section 4 & 5: Auto-Merge & Conflict Resolution */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
             {/* Auto Merge */}
             <div style={{
-              background: 'var(--bg-surface-elevated)',
+              background: '#ffffff',
               border: '1px solid var(--border-subtle)',
               borderRadius: 'var(--radius-md)',
-              padding: '14px'
+              padding: '14px',
+              boxShadow: 'var(--shadow-sm)'
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
-                <GitMerge size={16} color="#34d399" />
-                <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                <GitMerge size={16} color="#059669" />
+                <h4 style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--text-primary)' }}>
                   4. Auto-Merge
                 </h4>
               </div>
-              <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', lineHeight: 1.4 }}>
-                If two devices edit <strong>different fields</strong> (e.g. Laptop edits Description, Phone edits Status), SyncSafe automatically combines them into an <code>auto_merged</code> version without human effort.
+              <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
+                If two devices edit <strong>different fields</strong> (e.g. Laptop edits Description, Phone edits Status), SyncSafe automatically merges them into an <code>auto_merged</code> version without human effort.
               </p>
             </div>
 
-            {/* Conflict */}
+            {/* Conflict Resolution */}
             <div style={{
-              background: 'var(--bg-surface-elevated)',
+              background: '#ffffff',
               border: '1px solid var(--border-subtle)',
               borderRadius: 'var(--radius-md)',
-              padding: '14px'
+              padding: '14px',
+              boxShadow: 'var(--shadow-sm)'
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
-                <AlertTriangle size={16} color="#f43f5e" />
-                <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                  5. Conflict Resolver
+                <AlertTriangle size={16} color="#dc2626" />
+                <h4 style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                  5. Conflict Resolution
                 </h4>
               </div>
-              <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', lineHeight: 1.4 }}>
-                If two devices edit the <strong>same field</strong> differently, SyncSafe preserves Base, Server, and Incoming states. Choose <em>Keep Server</em>, <em>Keep Mine</em>, or <em>Custom Merge</em>.
+              <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
+                If two devices edit the <strong>same field</strong> concurrently, SyncSafe halts overwrites and preserves Base, Server, and Incoming edits. Choose <em>Keep Server</em>, <em>Keep Mine</em>, or <em>Custom Merge</em>.
               </p>
             </div>
           </div>
 
           {/* Section 6: Sync Lab */}
           <div style={{
-            background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%)',
-            border: '1px solid rgba(139, 92, 246, 0.35)',
+            background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.06) 0%, rgba(37, 99, 235, 0.06) 100%)',
+            border: '1px solid rgba(124, 58, 237, 0.25)',
             borderRadius: 'var(--radius-md)',
             padding: '16px'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Cpu size={18} color="#c084fc" />
-                <h4 style={{ fontSize: '0.92rem', fontWeight: 700, color: '#f3e8ff' }}>
+                <Cpu size={18} color="#7c3aed" />
+                <h4 style={{ fontSize: '0.92rem', fontWeight: 800, color: '#6d28d9' }}>
                   6. Sync Lab (Judge Demonstration Simulator)
                 </h4>
               </div>
@@ -305,61 +271,62 @@ export const QuickGuideModal: React.FC<QuickGuideModalProps> = ({
                 <ArrowRight size={13} />
               </button>
             </div>
-            <p style={{ fontSize: '0.8rem', color: 'rgba(233, 213, 255, 0.85)', lineHeight: 1.4 }}>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
               Sync Lab is the technical demonstration area simulating two physical devices (MacBook Pro & Pixel 8 Pro). Test online/offline toggling, artificial network latency/drops, queue inspection, and 3-way conflict resolution live.
             </p>
           </div>
 
-          {/* Section 7: 2-Minute Hackathon Demo Script */}
+          {/* Section 7: 2-Minute Demo */}
           <div style={{
-            background: 'var(--bg-surface-elevated)',
-            border: '1px solid var(--border-medium)',
+            background: '#ffffff',
+            border: '1px solid var(--border-subtle)',
             borderRadius: 'var(--radius-md)',
-            padding: '16px'
+            padding: '16px',
+            boxShadow: 'var(--shadow-sm)'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
-              <Clock size={16} color="#60a5fa" />
-              <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                7. 2-Minute Hackathon Demo Script
+              <Clock size={16} color="#2563eb" />
+              <h4 style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                7. 2-Minute Demo Cheat Sheet
               </h4>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '0.76rem', color: 'var(--text-secondary)' }}>
-              <div style={{ background: 'rgba(0,0,0,0.2)', padding: '8px 10px', borderRadius: 'var(--radius-sm)' }}>
-                <strong style={{ color: '#93c5fd' }}>1.</strong> Click <em>Reset Demo to V1</em> in Sync Lab
+              <div style={{ background: 'rgba(241, 245, 249, 0.8)', padding: '8px 10px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
+                <strong style={{ color: '#2563eb' }}>1.</strong> Click <em>Reset Demo (V1)</em>
               </div>
-              <div style={{ background: 'rgba(0,0,0,0.2)', padding: '8px 10px', borderRadius: 'var(--radius-sm)' }}>
-                <strong style={{ color: '#93c5fd' }}>2.</strong> Laptop edits title $\rightarrow$ Save & Sync (V2)
+              <div style={{ background: 'rgba(241, 245, 249, 0.8)', padding: '8px 10px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
+                <strong style={{ color: '#2563eb' }}>2.</strong> Laptop edits title → Save & Sync (V2)
               </div>
-              <div style={{ background: 'rgba(0,0,0,0.2)', padding: '8px 10px', borderRadius: 'var(--radius-sm)' }}>
-                <strong style={{ color: '#93c5fd' }}>3.</strong> Set Pixel 8 Pro <strong>OFFLINE</strong>
+              <div style={{ background: 'rgba(241, 245, 249, 0.8)', padding: '8px 10px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
+                <strong style={{ color: '#2563eb' }}>3.</strong> Set Pixel 8 Pro <strong>OFFLINE</strong>
               </div>
-              <div style={{ background: 'rgba(0,0,0,0.2)', padding: '8px 10px', borderRadius: 'var(--radius-sm)' }}>
-                <strong style={{ color: '#93c5fd' }}>4.</strong> Phone edits status $\rightarrow$ Save locally (Queue: 1)
+              <div style={{ background: 'rgba(241, 245, 249, 0.8)', padding: '8px 10px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
+                <strong style={{ color: '#2563eb' }}>4.</strong> Phone edits status → Save locally (Queue: 1)
               </div>
-              <div style={{ background: 'rgba(0,0,0,0.2)', padding: '8px 10px', borderRadius: 'var(--radius-sm)' }}>
-                <strong style={{ color: '#93c5fd' }}>5.</strong> Laptop edits description $\rightarrow$ Save & Sync (V3)
+              <div style={{ background: 'rgba(241, 245, 249, 0.8)', padding: '8px 10px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
+                <strong style={{ color: '#2563eb' }}>5.</strong> Laptop edits description → Save & Sync (V3)
               </div>
-              <div style={{ background: 'rgba(0,0,0,0.2)', padding: '8px 10px', borderRadius: 'var(--radius-sm)' }}>
-                <strong style={{ color: '#93c5fd' }}>6.</strong> Set Pixel 8 Pro <strong>ONLINE</strong>
+              <div style={{ background: 'rgba(241, 245, 249, 0.8)', padding: '8px 10px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
+                <strong style={{ color: '#2563eb' }}>6.</strong> Set Pixel 8 Pro <strong>ONLINE</strong>
               </div>
-              <div style={{ background: 'rgba(0,0,0,0.2)', padding: '8px 10px', borderRadius: 'var(--radius-sm)' }}>
-                <strong style={{ color: '#34d399' }}>7.</strong> Show <strong>Auto-Merge</strong> (V4: non-overlapping)
+              <div style={{ background: 'rgba(241, 245, 249, 0.8)', padding: '8px 10px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
+                <strong style={{ color: '#059669' }}>7.</strong> Show <strong>Auto-Merge</strong> (V4: non-overlapping)
               </div>
-              <div style={{ background: 'rgba(0,0,0,0.2)', padding: '8px 10px', borderRadius: 'var(--radius-sm)' }}>
-                <strong style={{ color: '#93c5fd' }}>8.</strong> Laptop & offline Phone edit <em>content</em>
+              <div style={{ background: 'rgba(241, 245, 249, 0.8)', padding: '8px 10px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
+                <strong style={{ color: '#2563eb' }}>8.</strong> Laptop & offline Phone edit <em>content</em>
               </div>
-              <div style={{ background: 'rgba(0,0,0,0.2)', padding: '8px 10px', borderRadius: 'var(--radius-sm)' }}>
-                <strong style={{ color: '#f43f5e' }}>9.</strong> Phone reconnects $\rightarrow$ <strong>Conflict Detected</strong>
+              <div style={{ background: 'rgba(241, 245, 249, 0.8)', padding: '8px 10px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
+                <strong style={{ color: '#dc2626' }}>9.</strong> Phone reconnects → <strong>Conflict Detected</strong>
               </div>
-              <div style={{ background: 'rgba(0,0,0,0.2)', padding: '8px 10px', borderRadius: 'var(--radius-sm)' }}>
-                <strong style={{ color: '#93c5fd' }}>10.</strong> Click <em>Review Conflict</em> (3-way view)
+              <div style={{ background: 'rgba(241, 245, 249, 0.8)', padding: '8px 10px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
+                <strong style={{ color: '#2563eb' }}>10.</strong> Click <em>Review Conflict</em> (3-way view)
               </div>
-              <div style={{ background: 'rgba(0,0,0,0.2)', padding: '8px 10px', borderRadius: 'var(--radius-sm)' }}>
-                <strong style={{ color: '#c084fc' }}>11.</strong> Select <em>Custom Merge</em> and Commit (V5)
+              <div style={{ background: 'rgba(241, 245, 249, 0.8)', padding: '8px 10px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
+                <strong style={{ color: '#7c3aed' }}>11.</strong> Select <em>Custom Merge</em> & Commit (V5)
               </div>
-              <div style={{ background: 'rgba(0,0,0,0.2)', padding: '8px 10px', borderRadius: 'var(--radius-sm)' }}>
-                <strong style={{ color: '#34d399' }}>12.</strong> Open <em>Version History</em> to show full lineage
+              <div style={{ background: 'rgba(241, 245, 249, 0.8)', padding: '8px 10px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
+                <strong style={{ color: '#059669' }}>12.</strong> Open <em>Version History</em> to show full lineage
               </div>
             </div>
           </div>
@@ -368,17 +335,17 @@ export const QuickGuideModal: React.FC<QuickGuideModalProps> = ({
         {/* Modal Footer */}
         <div style={{
           padding: '14px 24px',
-          background: 'rgba(15, 23, 42, 0.9)',
+          background: 'rgba(248, 250, 252, 0.95)',
           borderTop: '1px solid var(--border-subtle)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           flexShrink: 0
         }}>
-          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-            PS-13 Prototype · Zero Silent Data Loss
+          <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+            SyncSafe PS-13 · Zero Silent Data Loss
           </div>
-          <button className="btn btn-secondary btn-sm" onClick={onClose}>
+          <button className="btn btn-primary btn-sm" onClick={onClose}>
             Got it
           </button>
         </div>

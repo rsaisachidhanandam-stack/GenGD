@@ -3,7 +3,8 @@ import {
   Sparkles,
   CheckCircle2,
   ArrowRight,
-  Play
+  Play,
+  X
 } from 'lucide-react';
 
 interface DemoScriptWalkthroughProps {
@@ -107,8 +108,8 @@ export const DemoScriptWalkthrough: React.FC<DemoScriptWalkthroughProps> = ({
         {/* Header */}
         <div style={{
           padding: '16px 24px',
-          background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(59, 130, 246, 0.15) 100%)',
-          borderBottom: '1px solid rgba(139, 92, 246, 0.3)',
+          background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.06) 0%, rgba(37, 99, 235, 0.06) 100%)',
+          borderBottom: '1px solid var(--border-subtle)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between'
@@ -118,32 +119,33 @@ export const DemoScriptWalkthrough: React.FC<DemoScriptWalkthroughProps> = ({
               width: '34px',
               height: '34px',
               borderRadius: '8px',
-              background: 'linear-gradient(135deg, #8b5cf6, #3b82f6)',
+              background: 'linear-gradient(135deg, #7c3aed, #2563eb)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#ffffff'
+              color: '#ffffff',
+              boxShadow: '0 4px 12px rgba(124, 58, 237, 0.25)'
             }}>
               <Sparkles size={18} />
             </div>
             <div>
-              <h2 style={{ fontSize: '1.15rem', fontWeight: 700 }}>
-                Interactive Blueprint Demo Walkthrough (Section 12)
+              <h2 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                Guided Demo Script Walkthrough (Section 12)
               </h2>
               <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                Guided step-by-step verification of all core multi-device sync, offline, merge, and conflict scenarios.
+                Step-by-step verification of all core multi-device sync, offline, merge, and conflict scenarios.
               </p>
             </div>
           </div>
-          <button className="btn btn-outline btn-sm" onClick={onClose}>
-            ✕ Close
+          <button className="btn btn-ghost btn-sm" onClick={onClose} style={{ padding: '6px' }}>
+            <X size={18} />
           </button>
         </div>
 
         {/* Stepper Progress Bar */}
         <div style={{
           display: 'flex',
-          background: 'var(--bg-surface-elevated)',
+          background: 'rgba(248, 250, 252, 0.95)',
           borderBottom: '1px solid var(--border-subtle)',
           padding: '8px 16px',
           gap: '4px',
@@ -159,10 +161,10 @@ export const DemoScriptWalkthrough: React.FC<DemoScriptWalkthroughProps> = ({
                 padding: '6px 8px',
                 borderRadius: '6px',
                 border: activeStep === s.num ? '1px solid var(--accent-purple)' : '1px solid transparent',
-                background: activeStep === s.num ? 'rgba(139, 92, 246, 0.2)' : 'transparent',
-                color: activeStep === s.num ? '#c084fc' : 'var(--text-muted)',
-                fontSize: '0.72rem',
-                fontWeight: 600,
+                background: activeStep === s.num ? 'rgba(124, 58, 237, 0.12)' : 'transparent',
+                color: activeStep === s.num ? '#7c3aed' : 'var(--text-secondary)',
+                fontSize: '0.75rem',
+                fontWeight: 700,
                 cursor: 'pointer',
                 textAlign: 'center',
                 whiteSpace: 'nowrap'
@@ -174,9 +176,9 @@ export const DemoScriptWalkthrough: React.FC<DemoScriptWalkthroughProps> = ({
         </div>
 
         {/* Current Step Body */}
-        <div style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column', gap: '16px', background: '#ffffff', overflowY: 'auto' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--accent-purple)' }}>
+            <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--accent-purple)' }}>
               STEP {currentStepObj.num} OF {steps.length}
             </span>
             <span className="badge badge-synced">
@@ -184,26 +186,26 @@ export const DemoScriptWalkthrough: React.FC<DemoScriptWalkthroughProps> = ({
             </span>
           </div>
 
-          <h3 style={{ fontSize: '1.25rem', fontWeight: 800 }}>
+          <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)' }}>
             {currentStepObj.title}
           </h3>
 
           <div style={{
-            background: 'rgba(15, 23, 42, 0.7)',
-            border: '1px solid var(--border-medium)',
-            borderRadius: 'var(--radius-md)',
+            background: 'rgba(248, 250, 252, 0.9)',
+            border: '1px solid var(--border-subtle)',
+            borderRadius: 'var(--radius-lg)',
             padding: '16px',
             display: 'flex',
             flexDirection: 'column',
-            gap: '10px'
+            gap: '12px'
           }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
               <div style={{ color: 'var(--accent-blue)', marginTop: '2px' }}>
                 <ArrowRight size={18} />
               </div>
               <div>
-                <strong style={{ fontSize: '0.9rem', color: '#f8fafc' }}>Objective:</strong>
-                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                <strong style={{ fontSize: '0.9rem', color: 'var(--text-primary)' }}>Objective:</strong>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '2px', lineHeight: 1.45 }}>
                   {currentStepObj.goal}
                 </p>
               </div>
@@ -214,8 +216,8 @@ export const DemoScriptWalkthrough: React.FC<DemoScriptWalkthroughProps> = ({
                 <CheckCircle2 size={18} />
               </div>
               <div>
-                <strong style={{ fontSize: '0.9rem', color: '#f8fafc' }}>Technical Mechanics:</strong>
-                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                <strong style={{ fontSize: '0.9rem', color: 'var(--text-primary)' }}>Technical Mechanics:</strong>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '2px', lineHeight: 1.45 }}>
                   {currentStepObj.details}
                 </p>
               </div>
@@ -224,15 +226,16 @@ export const DemoScriptWalkthrough: React.FC<DemoScriptWalkthroughProps> = ({
 
           {stepSuccessMessage && (
             <div style={{
-              background: 'rgba(16, 185, 129, 0.15)',
-              border: '1px solid rgba(16, 185, 129, 0.3)',
-              color: '#6ee7b7',
+              background: 'rgba(16, 185, 129, 0.1)',
+              border: '1px solid rgba(16, 185, 129, 0.25)',
+              color: '#059669',
               padding: '10px 14px',
               borderRadius: 'var(--radius-md)',
               fontSize: '0.85rem',
               display: 'flex',
               alignItems: 'center',
-              gap: '8px'
+              gap: '8px',
+              fontWeight: 600
             }}>
               <CheckCircle2 size={16} />
               <span>{stepSuccessMessage}</span>
@@ -243,7 +246,7 @@ export const DemoScriptWalkthrough: React.FC<DemoScriptWalkthroughProps> = ({
         {/* Footer Controls */}
         <div style={{
           padding: '16px 24px',
-          background: 'rgba(15, 23, 42, 0.95)',
+          background: 'rgba(248, 250, 252, 0.95)',
           borderTop: '1px solid var(--border-subtle)',
           display: 'flex',
           alignItems: 'center',
@@ -270,14 +273,14 @@ export const DemoScriptWalkthrough: React.FC<DemoScriptWalkthroughProps> = ({
             <button
               className="btn btn-primary"
               style={{
-                background: 'linear-gradient(135deg, #8b5cf6 0%, #3b82f6 100%)',
-                boxShadow: '0 4px 15px rgba(139, 92, 246, 0.3)'
+                background: 'linear-gradient(135deg, #7c3aed 0%, #2563eb 100%)',
+                boxShadow: '0 4px 14px rgba(124, 58, 237, 0.28)'
               }}
               onClick={handleRunCurrentStep}
               disabled={isRunning}
             >
               <Play size={15} />
-              {isRunning ? 'Executing Step...' : currentStepObj.actionText}
+              <span>{isRunning ? 'Executing Step...' : currentStepObj.actionText}</span>
             </button>
           </div>
         </div>

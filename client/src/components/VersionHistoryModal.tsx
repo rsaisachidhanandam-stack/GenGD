@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { History, RotateCcw, Clock, Laptop, Smartphone } from 'lucide-react';
+import { History, RotateCcw, Clock, Laptop, Smartphone, ArrowDown, X } from 'lucide-react';
 
 interface Version {
   id: string;
@@ -36,11 +36,11 @@ export const VersionHistoryModal: React.FC<VersionHistoryModalProps> = ({
 
   return (
     <div className="modal-overlay">
-      <div className="modal-content fade-in" style={{ maxWidth: '960px', height: '80vh' }}>
+      <div className="modal-content fade-in" style={{ maxWidth: '980px', height: '82vh' }}>
         {/* Header */}
         <div style={{
           padding: '16px 24px',
-          background: 'var(--bg-surface-elevated)',
+          background: 'rgba(248, 250, 252, 0.95)',
           borderBottom: '1px solid var(--border-subtle)',
           display: 'flex',
           alignItems: 'center',
@@ -48,113 +48,136 @@ export const VersionHistoryModal: React.FC<VersionHistoryModalProps> = ({
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <div style={{
-              width: '32px',
-              height: '32px',
+              width: '34px',
+              height: '34px',
               borderRadius: '8px',
-              background: 'rgba(59, 130, 246, 0.15)',
+              background: 'rgba(37, 99, 235, 0.1)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#60a5fa'
+              color: '#2563eb'
             }}>
               <History size={18} />
             </div>
             <div>
-              <h2 style={{ fontSize: '1.1rem', fontWeight: 700 }}>Immutable Version History</h2>
-              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+              <h2 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                Immutable Version History
+              </h2>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                 Every change creates an immutable traceable snapshot with parent pointers.
               </p>
             </div>
           </div>
-          <button className="btn btn-outline btn-sm" onClick={onClose}>
-            ✕ Close
+          <button className="btn btn-ghost btn-sm" onClick={onClose} style={{ padding: '6px' }}>
+            <X size={18} />
           </button>
         </div>
 
         {/* Content: Left timeline, Right snapshot preview */}
-        <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', flex: 1, overflow: 'hidden' }}>
-          {/* Timeline List */}
+        <div style={{ display: 'grid', gridTemplateColumns: '340px 1fr', flex: 1, overflow: 'hidden' }}>
+          {/* Vertical Timeline List */}
           <div style={{
             borderRight: '1px solid var(--border-subtle)',
+            background: 'rgba(248, 250, 252, 0.65)',
             overflowY: 'auto',
-            padding: '14px',
+            padding: '16px',
             display: 'flex',
             flexDirection: 'column',
             gap: '8px'
           }}>
-            {versions.slice().reverse().map((v) => {
+            <div style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--text-secondary)', marginBottom: '4px' }}>
+              Version Lineage ({versions.length} Total)
+            </div>
+
+            {versions.slice().reverse().map((v, idx) => {
               const isSelected = selectedVersion?.version_number === v.version_number;
               const isCurrent = v.version_number === currentVersionNumber;
 
+              const label = v.version_number === 1 ? 'Initial Version' :
+                v.merge_type === 'auto_merged' ? 'Auto-Merge' :
+                v.merge_type === 'manual_resolution' ? 'Manual Resolution' : 'Direct Edit';
+
               return (
-                <div
-                  key={v.version_number}
-                  onClick={() => setSelectedVersion(v)}
-                  style={{
-                    padding: '10px 12px',
-                    borderRadius: 'var(--radius-md)',
-                    background: isSelected ? 'rgba(59, 130, 246, 0.15)' : 'rgba(255, 255, 255, 0.02)',
-                    border: isSelected ? '1px solid var(--accent-blue)' : '1px solid var(--border-subtle)',
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease'
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span style={{
-                        fontSize: '0.8rem',
-                        fontWeight: 800,
-                        color: isSelected ? '#93c5fd' : '#f8fafc'
-                      }}>
-                        Version {v.version_number}
-                      </span>
-                      {isCurrent && (
-                        <span className="badge badge-synced" style={{ fontSize: '0.65rem', padding: '1px 5px' }}>
-                          Current
+                <React.Fragment key={v.version_number}>
+                  <div
+                    onClick={() => setSelectedVersion(v)}
+                    style={{
+                      padding: '12px 14px',
+                      borderRadius: 'var(--radius-md)',
+                      background: isSelected ? 'rgba(37, 99, 235, 0.08)' : '#ffffff',
+                      border: isSelected ? '1px solid var(--accent-blue)' : '1px solid var(--border-subtle)',
+                      boxShadow: isSelected ? '0 2px 8px rgba(37, 99, 235, 0.15)' : 'var(--shadow-sm)',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span style={{
+                          fontSize: '0.85rem',
+                          fontWeight: 800,
+                          color: isSelected ? '#2563eb' : 'var(--text-primary)',
+                          fontFamily: 'var(--font-mono)'
+                        }}>
+                          V{v.version_number}
                         </span>
-                      )}
+                        {isCurrent && (
+                          <span className="badge badge-synced" style={{ fontSize: '0.65rem', padding: '1px 5px' }}>
+                            Current
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Merge Type Badge */}
+                      <span style={{
+                        fontSize: '0.68rem',
+                        fontWeight: 700,
+                        padding: '2px 7px',
+                        borderRadius: '4px',
+                        background: v.merge_type === 'auto_merged' ? 'rgba(16, 185, 129, 0.12)' :
+                                    v.merge_type === 'manual_resolution' ? 'rgba(124, 58, 237, 0.12)' : 'rgba(241, 245, 249, 0.9)',
+                        color: v.merge_type === 'auto_merged' ? '#059669' :
+                               v.merge_type === 'manual_resolution' ? '#7c3aed' : 'var(--text-secondary)'
+                      }}>
+                        {label}
+                      </span>
                     </div>
-                    {/* Merge Badge */}
-                    <span style={{
-                      fontSize: '0.65rem',
-                      fontWeight: 700,
-                      padding: '2px 6px',
-                      borderRadius: '4px',
-                      background: v.merge_type === 'auto_merged' ? 'rgba(16, 185, 129, 0.2)' :
-                                  v.merge_type === 'manual_resolution' ? 'rgba(139, 92, 246, 0.2)' : 'rgba(255, 255, 255, 0.05)',
-                      color: v.merge_type === 'auto_merged' ? '#34d399' :
-                             v.merge_type === 'manual_resolution' ? '#c084fc' : 'var(--text-secondary)'
-                    }}>
-                      {v.version_number === 1 ? 'Initial Version' :
-                       v.merge_type === 'auto_merged' ? 'Auto-Merge' :
-                       v.merge_type === 'manual_resolution' ? 'Manual Resolution' : 'Direct Edit'}
-                    </span>
+
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '3px' }}>
+                      <Clock size={12} color="var(--text-muted)" />
+                      {new Date(v.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                    </div>
+
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      {v.device_id.includes('mobile') || v.device_id.includes('phone') ? (
+                        <Smartphone size={12} color="#7c3aed" />
+                      ) : (
+                        <Laptop size={12} color="#2563eb" />
+                      )}
+                      <span>{v.device_id}</span>
+                    </div>
                   </div>
 
-                  <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '2px' }}>
-                    <Clock size={12} />
-                    {new Date(v.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-                  </div>
-
-                  <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    {v.device_id.includes('mobile') || v.device_id.includes('phone') ? <Smartphone size={12} /> : <Laptop size={12} />}
-                    {v.device_id}
-                  </div>
-                </div>
+                  {idx < versions.length - 1 && (
+                    <div style={{ display: 'flex', justifyContent: 'center', margin: '-4px 0' }}>
+                      <ArrowDown size={14} color="var(--border-medium)" />
+                    </div>
+                  )}
+                </React.Fragment>
               );
             })}
           </div>
 
           {/* Snapshot Viewer */}
-          <div style={{ padding: '18px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <div style={{ padding: '20px 24px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '14px', background: '#ffffff' }}>
             {selectedVersion ? (
               <>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '10px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '12px' }}>
                   <div>
-                    <h3 style={{ fontSize: '1rem', fontWeight: 700 }}>
+                    <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-primary)' }}>
                       Version {selectedVersion.version_number} Snapshot
                     </h3>
-                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                    <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                       Parent: Version {selectedVersion.parent_version} • Change ID: {selectedVersion.change_id.slice(0, 8)}...
                     </p>
                   </div>
@@ -168,34 +191,38 @@ export const VersionHistoryModal: React.FC<VersionHistoryModalProps> = ({
                   )}
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '10px' }}>
-                  <div style={{ background: 'rgba(0,0,0,0.2)', padding: '10px', borderRadius: 'var(--radius-sm)' }}>
-                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Title:</div>
-                    <div style={{ fontWeight: 600 }}>{selectedVersion.title}</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '12px' }}>
+                  <div style={{ background: 'rgba(248, 250, 252, 0.85)', padding: '12px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)' }}>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Title:</div>
+                    <div style={{ fontWeight: 600, color: 'var(--text-primary)', marginTop: '2px' }}>{selectedVersion.title}</div>
                   </div>
-                  <div style={{ background: 'rgba(0,0,0,0.2)', padding: '10px', borderRadius: 'var(--radius-sm)' }}>
-                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Status:</div>
-                    <div><span className="badge badge-synced">{selectedVersion.status}</span></div>
+                  <div style={{ background: 'rgba(248, 250, 252, 0.85)', padding: '12px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)' }}>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Status:</div>
+                    <div style={{ marginTop: '2px' }}><span className="badge badge-synced">{selectedVersion.status}</span></div>
                   </div>
                 </div>
 
-                <div style={{ background: 'rgba(0,0,0,0.2)', padding: '10px', borderRadius: 'var(--radius-sm)' }}>
-                  <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Description:</div>
-                  <div style={{ fontSize: '0.85rem' }}>{selectedVersion.description || '(Empty)'}</div>
+                <div style={{ background: 'rgba(248, 250, 252, 0.85)', padding: '12px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)' }}>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Description:</div>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text-primary)', marginTop: '2px' }}>
+                    {selectedVersion.description || '(Empty)'}
+                  </div>
                 </div>
 
                 <div>
-                  <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '4px' }}>Content:</div>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', fontWeight: 600, marginBottom: '6px' }}>Content:</div>
                   <pre style={{
-                    background: 'rgba(0,0,0,0.4)',
-                    padding: '12px',
+                    background: 'rgba(248, 250, 252, 0.95)',
+                    color: 'var(--text-primary)',
+                    padding: '16px',
                     borderRadius: 'var(--radius-md)',
                     fontFamily: 'var(--font-mono)',
-                    fontSize: '0.8rem',
+                    fontSize: '0.82rem',
+                    lineHeight: 1.6,
                     whiteSpace: 'pre-wrap',
-                    maxHeight: '300px',
+                    maxHeight: '320px',
                     overflowY: 'auto',
-                    border: '1px solid var(--border-subtle)'
+                    border: '1px solid var(--border-medium)'
                   }}>
                     {selectedVersion.content}
                   </pre>

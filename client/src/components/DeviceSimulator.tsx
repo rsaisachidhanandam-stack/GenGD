@@ -112,7 +112,6 @@ export const DeviceSimulator: React.FC<DeviceSimulatorProps> = ({
       if (content !== doc.content) changedFields.content = content;
 
       if (Object.keys(changedFields).length === 0) {
-        // Nothing changed
         setIsSaving(false);
         return;
       }
@@ -126,7 +125,6 @@ export const DeviceSimulator: React.FC<DeviceSimulatorProps> = ({
   };
 
   const handleSimulateRestart = async () => {
-    // TC10: Close and reload from IndexedDB
     if (!doc) return;
     const cached = await coordinator.storage.getDocument(doc.id);
     const queue = await coordinator.storage.getPendingQueue();
@@ -138,7 +136,6 @@ export const DeviceSimulator: React.FC<DeviceSimulatorProps> = ({
       setContent(cached.content);
     }
     setPendingQueue(queue);
-    // If online, resume processing
     if (coordinator.isOnline) {
       coordinator.processPendingQueue();
     }
@@ -153,23 +150,23 @@ export const DeviceSimulator: React.FC<DeviceSimulatorProps> = ({
       <div className="device-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div style={{
-            width: '28px',
-            height: '28px',
-            borderRadius: '6px',
-            background: deviceType === 'laptop' ? 'rgba(59, 130, 246, 0.2)' : 'rgba(139, 92, 246, 0.2)',
+            width: '30px',
+            height: '30px',
+            borderRadius: '8px',
+            background: deviceType === 'laptop' ? 'rgba(37, 99, 235, 0.1)' : 'rgba(124, 58, 237, 0.1)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: deviceType === 'laptop' ? '#60a5fa' : '#c084fc'
+            color: deviceType === 'laptop' ? '#2563eb' : '#7c3aed'
           }}>
-            {deviceType === 'laptop' ? <Laptop size={16} /> : <Smartphone size={16} />}
+            {deviceType === 'laptop' ? <Laptop size={17} /> : <Smartphone size={17} />}
           </div>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ fontSize: '0.85rem', fontWeight: 700 }}>
+              <span style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-primary)' }}>
                 {coordinator.deviceName}
               </span>
-              <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
+              <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
                 ({coordinator.deviceId})
               </span>
             </div>
@@ -180,7 +177,7 @@ export const DeviceSimulator: React.FC<DeviceSimulatorProps> = ({
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <button
             className={`btn btn-sm ${isOnline ? 'btn-success' : 'btn-danger'}`}
-            style={{ fontSize: '0.72rem', padding: '3px 8px' }}
+            style={{ fontSize: '0.72rem', padding: '4px 9px', fontWeight: 700 }}
             onClick={() => handleToggleOnline(!isOnline)}
             title="Toggle device offline/online state to test offline persistence and reconnect"
           >
@@ -190,7 +187,7 @@ export const DeviceSimulator: React.FC<DeviceSimulatorProps> = ({
 
           <button
             className="btn btn-outline btn-sm"
-            style={{ padding: '4px 6px' }}
+            style={{ padding: '4px 7px' }}
             onClick={() => setShowNetworkSettings(!showNetworkSettings)}
             title="Simulate network conditions (latency, upload drop/timeout)"
           >
@@ -202,8 +199,8 @@ export const DeviceSimulator: React.FC<DeviceSimulatorProps> = ({
       {/* Network Simulator Drawer */}
       {showNetworkSettings && (
         <div style={{
-          background: 'rgba(0, 0, 0, 0.35)',
-          padding: '8px 16px',
+          background: 'rgba(241, 245, 249, 0.95)',
+          padding: '10px 16px',
           borderBottom: '1px solid var(--border-subtle)',
           fontSize: '0.75rem',
           display: 'flex',
@@ -211,7 +208,7 @@ export const DeviceSimulator: React.FC<DeviceSimulatorProps> = ({
           gap: '8px'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span>Network Latency Simulation: <strong>{simLatency}ms</strong></span>
+            <span style={{ color: 'var(--text-secondary)' }}>Network Latency Simulation: <strong>{simLatency}ms</strong></span>
             <input
               type="range"
               min="0"
@@ -227,7 +224,7 @@ export const DeviceSimulator: React.FC<DeviceSimulatorProps> = ({
             />
           </div>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span>Simulate Network Timeout on Upload (TC08):</span>
+            <span style={{ color: 'var(--text-secondary)' }}>Simulate Network Timeout on Upload (TC08):</span>
             <input
               type="checkbox"
               checked={simFailure}
@@ -241,10 +238,10 @@ export const DeviceSimulator: React.FC<DeviceSimulatorProps> = ({
         </div>
       )}
 
-      {/* Sync State Banner (Blueprint §12 Truth-in-UI) */}
+      {/* Sync State Banner */}
       <div style={{
         padding: '8px 16px',
-        background: 'rgba(0, 0, 0, 0.25)',
+        background: 'rgba(248, 250, 252, 0.95)',
         borderBottom: '1px solid var(--border-subtle)',
         display: 'flex',
         alignItems: 'center',
@@ -316,11 +313,11 @@ export const DeviceSimulator: React.FC<DeviceSimulatorProps> = ({
       </div>
 
       {/* Editor Body */}
-      <div className="device-body">
+      <div className="device-body" style={{ background: '#ffffff' }}>
         {/* Title & Status */}
         <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '10px' }}>
           <div>
-            <label style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+            <label style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
               DOCUMENT TITLE
             </label>
             <input
@@ -328,17 +325,19 @@ export const DeviceSimulator: React.FC<DeviceSimulatorProps> = ({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Document Title"
+              style={{ fontSize: '0.85rem' }}
             />
           </div>
 
           <div>
-            <label style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+            <label style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
               WORKFLOW STATUS
             </label>
             <select
               className="form-select"
               value={status}
               onChange={(e: any) => setStatus(e.target.value)}
+              style={{ fontSize: '0.85rem' }}
             >
               <option value="draft">draft</option>
               <option value="in_review">in_review</option>
@@ -350,7 +349,7 @@ export const DeviceSimulator: React.FC<DeviceSimulatorProps> = ({
 
         {/* Description */}
         <div>
-          <label style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+          <label style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
             DESCRIPTION (STRUCTURED FIELD)
           </label>
           <input
@@ -358,17 +357,24 @@ export const DeviceSimulator: React.FC<DeviceSimulatorProps> = ({
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Brief document description"
+            style={{ fontSize: '0.85rem' }}
           />
         </div>
 
         {/* Content Markdown */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-          <label style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+          <label style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
             CONTENT (MARKDOWN / TEXT)
           </label>
           <textarea
             className="form-textarea code-mode"
-            style={{ flex: 1, minHeight: '160px' }}
+            style={{
+              flex: 1,
+              minHeight: '160px',
+              background: '#ffffff',
+              border: '1px solid var(--border-medium)',
+              color: 'var(--text-primary)'
+            }}
             value={content}
             onChange={(e) => setContent(e.target.value)}
             placeholder="Type content here..."
@@ -379,7 +385,7 @@ export const DeviceSimulator: React.FC<DeviceSimulatorProps> = ({
       {/* Device Action Bar */}
       <div style={{
         padding: '12px 16px',
-        background: 'var(--bg-surface-elevated)',
+        background: 'rgba(248, 250, 252, 0.95)',
         borderTop: '1px solid var(--border-subtle)',
         display: 'flex',
         alignItems: 'center',
@@ -395,9 +401,9 @@ export const DeviceSimulator: React.FC<DeviceSimulatorProps> = ({
           </button>
         </div>
 
-        <div style={{ display: 'flex', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           {isLocallyModified && (
-            <span style={{ fontSize: '0.75rem', color: '#fbbf24', display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <span style={{ fontSize: '0.75rem', color: '#d97706', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
               <FileEdit size={13} /> Unsaved edits
             </span>
           )}
@@ -408,7 +414,7 @@ export const DeviceSimulator: React.FC<DeviceSimulatorProps> = ({
             disabled={isSaving || !isLocallyModified}
           >
             <Send size={13} />
-            {isOnline ? 'Save & Sync' : 'Save Locally (Queue)'}
+            <span>{isOnline ? 'Save & Sync' : 'Save Locally (Queue)'}</span>
           </button>
         </div>
       </div>

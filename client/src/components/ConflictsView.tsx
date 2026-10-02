@@ -25,7 +25,7 @@ export const ConflictsView: React.FC<ConflictsViewProps> = ({
   return (
     <div style={{ padding: '28px 36px', maxWidth: '1000px', margin: '0 auto', width: '100%' }}>
       {/* Header */}
-      <div style={{ marginBottom: '28px' }}>
+      <div style={{ marginBottom: '24px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <h1 style={{ fontSize: '1.65rem', fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>
             Conflict Management
@@ -33,13 +33,13 @@ export const ConflictsView: React.FC<ConflictsViewProps> = ({
           {conflicts.length > 0 && (
             <span
               style={{
-                background: '#f43f5e',
+                background: '#ef4444',
                 color: '#ffffff',
                 fontSize: '0.75rem',
                 fontWeight: 700,
                 padding: '2px 8px',
                 borderRadius: '9999px',
-                boxShadow: '0 0 10px rgba(244, 63, 94, 0.4)'
+                boxShadow: '0 0 8px rgba(239, 68, 68, 0.35)'
               }}
             >
               {conflicts.length} Active
@@ -56,34 +56,34 @@ export const ConflictsView: React.FC<ConflictsViewProps> = ({
         <div style={{
           textAlign: 'center',
           padding: '64px 24px',
-          background: 'var(--bg-surface)',
+          background: '#ffffff',
           borderRadius: 'var(--radius-xl)',
           border: '1px solid var(--border-subtle)',
-          boxShadow: 'var(--shadow-md)'
+          boxShadow: 'var(--shadow-sm)'
         }}>
           <div style={{
             width: '64px',
             height: '64px',
             borderRadius: '50%',
-            background: 'rgba(16, 185, 129, 0.12)',
+            background: 'rgba(16, 185, 129, 0.1)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             margin: '0 auto 16px',
-            border: '1px solid rgba(16, 185, 129, 0.3)'
+            border: '1px solid rgba(16, 185, 129, 0.25)'
           }}>
-            <ShieldCheck size={32} color="#10b981" />
+            <ShieldCheck size={32} color="#059669" />
           </div>
-          <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+          <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-primary)' }}>
             No conflicts detected
           </h3>
-          <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '6px', maxWidth: '420px', margin: '6px auto 20px' }}>
+          <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginTop: '6px', maxWidth: '420px', margin: '6px auto 20px' }}>
             All your files are synchronized safely across all connected devices. Non-overlapping edits merge automatically.
           </p>
           <button
             className="btn btn-outline btn-sm"
             onClick={onOpenSyncLab}
-            style={{ borderColor: 'rgba(139, 92, 246, 0.4)', color: '#c084fc', gap: '6px' }}
+            style={{ borderColor: 'rgba(124, 58, 237, 0.3)', color: '#7c3aed', gap: '6px' }}
           >
             <Cpu size={14} />
             <span>Simulate Conflict in Sync Lab</span>
@@ -103,11 +103,11 @@ export const ConflictsView: React.FC<ConflictsViewProps> = ({
               <div
                 key={conflict.id}
                 style={{
-                  background: 'var(--bg-surface)',
-                  border: '1px solid rgba(244, 63, 94, 0.35)',
+                  background: '#ffffff',
+                  border: '1px solid rgba(239, 68, 68, 0.3)',
                   borderRadius: 'var(--radius-lg)',
                   padding: '24px',
-                  boxShadow: '0 8px 30px rgba(244, 63, 94, 0.1)',
+                  boxShadow: '0 8px 24px -4px rgba(239, 68, 68, 0.08)',
                   display: 'flex',
                   flexDirection: 'column',
                   gap: '16px',
@@ -122,7 +122,7 @@ export const ConflictsView: React.FC<ConflictsViewProps> = ({
                   left: 0,
                   right: 0,
                   height: '3px',
-                  background: 'linear-gradient(90deg, #f43f5e, #fb7185)'
+                  background: 'linear-gradient(90deg, #ef4444, #f87171)'
                 }} />
 
                 {/* Card Top */}
@@ -132,11 +132,11 @@ export const ConflictsView: React.FC<ConflictsViewProps> = ({
                       width: '42px',
                       height: '42px',
                       borderRadius: '10px',
-                      background: 'rgba(244, 63, 94, 0.15)',
+                      background: 'rgba(239, 68, 68, 0.1)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      color: '#fb7185'
+                      color: '#dc2626'
                     }}>
                       <AlertTriangle size={22} />
                     </div>
@@ -158,8 +158,8 @@ export const ConflictsView: React.FC<ConflictsViewProps> = ({
                     className="btn btn-primary"
                     onClick={() => onReviewConflict(conflict)}
                     style={{
-                      background: 'linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)',
-                      boxShadow: '0 4px 14px rgba(244, 63, 94, 0.4)',
+                      background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                      boxShadow: '0 4px 14px rgba(239, 68, 68, 0.3)',
                       gap: '8px'
                     }}
                   >
@@ -173,57 +173,59 @@ export const ConflictsView: React.FC<ConflictsViewProps> = ({
                   display: 'grid',
                   gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
                   gap: '12px',
-                  background: 'rgba(15, 23, 42, 0.6)',
+                  background: 'rgba(248, 250, 252, 0.95)',
+                  border: '1px solid var(--border-subtle)',
                   padding: '14px 18px',
                   borderRadius: 'var(--radius-md)',
                   fontSize: '0.82rem'
                 }}>
                   <div>
-                    <span style={{ color: 'var(--text-muted)', display: 'block', marginBottom: '2px' }}>
+                    <span style={{ color: 'var(--text-secondary)', display: 'block', marginBottom: '2px', fontWeight: 600 }}>
                       Modified on Devices:
                     </span>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontWeight: 600, color: 'var(--text-primary)', marginTop: '4px' }}>
                       <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                        <Laptop size={14} color="#60a5fa" />
+                        <Laptop size={14} color="#2563eb" />
                         <span>MacBook Pro</span>
                       </span>
                       <span style={{ color: 'var(--text-muted)' }}>&</span>
                       <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                        <Smartphone size={14} color="#c084fc" />
+                        <Smartphone size={14} color="#7c3aed" />
                         <span>Pixel 8 Pro</span>
                       </span>
                     </div>
                   </div>
 
                   <div>
-                    <span style={{ color: 'var(--text-muted)', display: 'block', marginBottom: '2px' }}>
+                    <span style={{ color: 'var(--text-secondary)', display: 'block', marginBottom: '2px', fontWeight: 600 }}>
                       Conflicting Field:
                     </span>
                     <span style={{
                       fontWeight: 700,
-                      color: '#fb7185',
+                      color: '#dc2626',
                       fontFamily: 'var(--font-mono)',
-                      background: 'rgba(244, 63, 94, 0.1)',
+                      background: 'rgba(239, 68, 68, 0.08)',
                       padding: '2px 8px',
                       borderRadius: '4px',
-                      display: 'inline-block'
+                      display: 'inline-block',
+                      border: '1px solid rgba(239, 68, 68, 0.2)'
                     }}>
                       {conflictingFields}
                     </span>
                   </div>
 
                   <div>
-                    <span style={{ color: 'var(--text-muted)', display: 'block', marginBottom: '2px' }}>
+                    <span style={{ color: 'var(--text-secondary)', display: 'block', marginBottom: '2px', fontWeight: 600 }}>
                       Detected At:
                     </span>
-                    <span style={{ color: 'var(--text-secondary)' }}>
+                    <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>
                       {new Date(conflict.created_at || Date.now()).toLocaleTimeString()}
                     </span>
                   </div>
                 </div>
 
                 {/* Technical Note */}
-                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
+                <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
                   SyncSafe uses an immutable 3-way differential engine. Review allows choosing <strong>Server Version</strong>, <strong>Incoming Device Version</strong>, or crafting a <strong>Custom 3-Way Merge</strong>.
                 </div>
               </div>

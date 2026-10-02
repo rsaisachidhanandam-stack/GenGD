@@ -6,7 +6,9 @@ import {
   Columns,
   RotateCcw,
   BookOpen,
-  RefreshCw
+  RefreshCw,
+  ArrowLeftRight,
+  Server
 } from 'lucide-react';
 import { DeviceSimulator } from './DeviceSimulator';
 import { ClientSyncCoordinator } from '../services/clientSyncCoordinator';
@@ -52,17 +54,20 @@ export const SyncLabView: React.FC<SyncLabViewProps> = ({
       {/* Top Banner / Controls */}
       <div style={{
         padding: '16px 28px',
-        background: 'rgba(15, 23, 42, 0.95)',
+        background: 'rgba(255, 255, 255, 0.85)',
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
         borderBottom: '1px solid var(--border-subtle)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         flexWrap: 'wrap',
-        gap: '16px'
+        gap: '16px',
+        boxShadow: 'var(--shadow-sm)'
       }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Cpu size={20} color="#c084fc" />
+            <Cpu size={20} color="#7c3aed" />
             <h1 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.01em' }}>
               Sync Lab
             </h1>
@@ -70,10 +75,10 @@ export const SyncLabView: React.FC<SyncLabViewProps> = ({
               fontSize: '0.7rem',
               textTransform: 'uppercase',
               fontWeight: 800,
-              padding: '2px 6px',
+              padding: '2px 7px',
               borderRadius: '4px',
-              background: 'rgba(192, 132, 252, 0.2)',
-              color: '#e9d5ff'
+              background: 'rgba(124, 58, 237, 0.1)',
+              color: '#7c3aed'
             }}>
               PS-13 Engine
             </span>
@@ -88,11 +93,12 @@ export const SyncLabView: React.FC<SyncLabViewProps> = ({
           {/* View Mode Toggle */}
           <div style={{
             display: 'flex',
-            background: 'var(--bg-surface-elevated)',
+            background: '#ffffff',
             padding: '3px',
             borderRadius: 'var(--radius-md)',
             border: '1px solid var(--border-medium)',
-            fontSize: '0.75rem'
+            fontSize: '0.75rem',
+            boxShadow: 'var(--shadow-sm)'
           }}>
             <button
               onClick={() => setViewMode('dual')}
@@ -103,8 +109,8 @@ export const SyncLabView: React.FC<SyncLabViewProps> = ({
                 padding: '5px 10px',
                 borderRadius: 'var(--radius-sm)',
                 border: 'none',
-                background: viewMode === 'dual' ? 'rgba(59, 130, 246, 0.25)' : 'transparent',
-                color: viewMode === 'dual' ? '#60a5fa' : 'var(--text-muted)',
+                background: viewMode === 'dual' ? 'rgba(37, 99, 235, 0.12)' : 'transparent',
+                color: viewMode === 'dual' ? '#2563eb' : 'var(--text-secondary)',
                 cursor: 'pointer',
                 fontWeight: 600
               }}
@@ -122,8 +128,8 @@ export const SyncLabView: React.FC<SyncLabViewProps> = ({
                 padding: '5px 10px',
                 borderRadius: 'var(--radius-sm)',
                 border: 'none',
-                background: viewMode === 'laptop' ? 'rgba(59, 130, 246, 0.25)' : 'transparent',
-                color: viewMode === 'laptop' ? '#60a5fa' : 'var(--text-muted)',
+                background: viewMode === 'laptop' ? 'rgba(37, 99, 235, 0.12)' : 'transparent',
+                color: viewMode === 'laptop' ? '#2563eb' : 'var(--text-secondary)',
                 cursor: 'pointer',
                 fontWeight: 600
               }}
@@ -140,8 +146,8 @@ export const SyncLabView: React.FC<SyncLabViewProps> = ({
                 padding: '5px 10px',
                 borderRadius: 'var(--radius-sm)',
                 border: 'none',
-                background: viewMode === 'mobile' ? 'rgba(139, 92, 246, 0.25)' : 'transparent',
-                color: viewMode === 'mobile' ? '#c084fc' : 'var(--text-muted)',
+                background: viewMode === 'mobile' ? 'rgba(124, 58, 237, 0.12)' : 'transparent',
+                color: viewMode === 'mobile' ? '#7c3aed' : 'var(--text-secondary)',
                 cursor: 'pointer',
                 fontWeight: 600
               }}
@@ -157,7 +163,7 @@ export const SyncLabView: React.FC<SyncLabViewProps> = ({
             onClick={onOpenDemoScript}
             style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
           >
-            <BookOpen size={14} color="#60a5fa" />
+            <BookOpen size={14} color="#2563eb" />
             <span>Guided Demo Script</span>
           </button>
 
@@ -166,13 +172,61 @@ export const SyncLabView: React.FC<SyncLabViewProps> = ({
             className="btn btn-outline btn-sm"
             onClick={onResetDemo}
             disabled={isResetting}
-            style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#fb7185', borderColor: 'rgba(244, 63, 94, 0.3)' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#dc2626', borderColor: 'rgba(239, 68, 68, 0.3)' }}
           >
             {isResetting ? <RefreshCw size={14} className="animate-spin" /> : <RotateCcw size={14} />}
             <span>{isResetting ? 'Resetting...' : 'Reset Demo (V1)'}</span>
           </button>
         </div>
       </div>
+
+      {/* Sync Flow Indicator Strip */}
+      {viewMode === 'dual' && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '16px',
+          padding: '8px 24px',
+          background: 'rgba(255, 255, 255, 0.65)',
+          borderBottom: '1px solid var(--border-subtle)',
+          fontSize: '0.75rem',
+          color: 'var(--text-secondary)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#2563eb', fontWeight: 600 }}>
+            <Laptop size={14} />
+            <span>MacBook Pro</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-muted)' }}>
+            <span style={{ height: '1px', width: '28px', background: 'var(--border-medium)' }} />
+            <ArrowLeftRight size={13} color="#2563eb" />
+            <span style={{ height: '1px', width: '28px', background: 'var(--border-medium)' }} />
+          </div>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '3px 10px',
+            borderRadius: '9999px',
+            background: 'rgba(37, 99, 235, 0.08)',
+            border: '1px solid rgba(37, 99, 235, 0.2)',
+            color: '#2563eb',
+            fontWeight: 700
+          }}>
+            <Server size={13} />
+            <span>SQLite WAL · 3-Way Auto-Merge Consensus</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-muted)' }}>
+            <span style={{ height: '1px', width: '28px', background: 'var(--border-medium)' }} />
+            <ArrowLeftRight size={13} color="#7c3aed" />
+            <span style={{ height: '1px', width: '28px', background: 'var(--border-medium)' }} />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#7c3aed', fontWeight: 600 }}>
+            <Smartphone size={14} />
+            <span>Pixel 8 Pro</span>
+          </div>
+        </div>
+      )}
 
       {/* Main Dual Device Viewport */}
       <div style={{

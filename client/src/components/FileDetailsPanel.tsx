@@ -34,8 +34,19 @@ export const FileDetailsPanel: React.FC<FileDetailsPanelProps> = ({
   if (!document) {
     return (
       <div className="details-panel" style={{ justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
-        <FileText size={36} color="var(--text-muted)" style={{ opacity: 0.5 }} />
-        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '8px' }}>
+        <div style={{
+          width: '56px',
+          height: '56px',
+          borderRadius: '50%',
+          background: 'rgba(241, 245, 249, 0.8)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          margin: '0 auto 12px'
+        }}>
+          <FileText size={28} color="var(--text-muted)" style={{ opacity: 0.6 }} />
+        </div>
+        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', maxWidth: '200px' }}>
           Select a file to inspect metadata, version lineage, and sync activity.
         </div>
       </div>
@@ -56,30 +67,31 @@ export const FileDetailsPanel: React.FC<FileDetailsPanelProps> = ({
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <FileText size={18} color="#60a5fa" />
-          <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-primary)' }}>
+          <FileText size={18} color="#2563eb" />
+          <span style={{ fontWeight: 700, fontSize: '0.92rem', color: 'var(--text-primary)' }}>
             File Details
           </span>
         </div>
         <button
           onClick={onClose}
-          style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex' }}
+          style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', padding: '4px' }}
         >
           <X size={16} />
         </button>
       </div>
 
-      {/* File Overview Preview */}
+      {/* File Overview Preview Card */}
       <div style={{
         padding: '16px',
-        borderRadius: 'var(--radius-md)',
-        background: 'var(--bg-surface-elevated)',
+        borderRadius: 'var(--radius-lg)',
+        background: '#ffffff',
         border: '1px solid var(--border-subtle)',
         display: 'flex',
         flexDirection: 'column',
-        gap: '8px'
+        gap: '8px',
+        boxShadow: 'var(--shadow-sm)'
       }}>
-        <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-primary)', wordBreak: 'break-word' }}>
+        <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-primary)', wordBreak: 'break-word', lineHeight: 1.3 }}>
           {document.name || document.title}
         </div>
         {document.title && document.title !== document.name && (
@@ -108,87 +120,123 @@ export const FileDetailsPanel: React.FC<FileDetailsPanelProps> = ({
         </div>
       </div>
 
-      {/* Quick Action Button */}
+      {/* Primary Action Button: Open in Editor */}
       <button
         className="btn btn-primary"
         onClick={() => onOpenDoc(document)}
-        style={{ width: '100%', gap: '8px' }}
+        style={{ width: '100%', gap: '8px', padding: '10px' }}
       >
         <ExternalLink size={15} />
         <span>Open in Editor</span>
       </button>
 
-      {/* Metadata Table */}
+      {/* Properties Metadata Section */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        <div style={{ fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--text-muted)' }}>
+        <div style={{ fontSize: '0.78rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--text-secondary)' }}>
           Properties
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '0.8rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255, 255, 255, 0.04)', paddingBottom: '6px' }}>
-            <span style={{ color: 'var(--text-muted)' }}>File Type</span>
-            <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>Markdown Document (.md)</span>
-          </div>
-
-          <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255, 255, 255, 0.04)', paddingBottom: '6px' }}>
-            <span style={{ color: 'var(--text-muted)' }}>Current Version</span>
-            <span style={{ color: '#93c5fd', fontFamily: 'var(--font-mono)', fontWeight: 600 }}>
-              Version {document.current_version || 1}
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '10px',
+          fontSize: '0.82rem',
+          background: '#ffffff',
+          padding: '14px',
+          borderRadius: 'var(--radius-md)',
+          border: '1px solid var(--border-subtle)',
+          boxShadow: 'var(--shadow-sm)'
+        }}>
+          {/* File Name */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '7px' }}>
+            <span style={{ color: 'var(--text-secondary)' }}>File Name</span>
+            <span style={{ color: 'var(--text-primary)', fontWeight: 600, maxWidth: '140px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {document.name || 'Untitled.md'}
             </span>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255, 255, 255, 0.04)', paddingBottom: '6px' }}>
-            <span style={{ color: 'var(--text-muted)' }}>Status Tag</span>
+          {/* Sync Status */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '7px' }}>
+            <span style={{ color: 'var(--text-secondary)' }}>Sync Status</span>
+            <span style={{ fontWeight: 600, color: hasConflict ? '#dc2626' : document.isLocallyModified ? '#d97706' : '#059669' }}>
+              {hasConflict ? 'Conflict' : document.isLocallyModified ? 'Pending' : 'Synced'}
+            </span>
+          </div>
+
+          {/* File Type */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '7px' }}>
+            <span style={{ color: 'var(--text-secondary)' }}>File Type</span>
+            <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>Markdown (.md)</span>
+          </div>
+
+          {/* Current Version */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '7px' }}>
+            <span style={{ color: 'var(--text-secondary)' }}>Current Version</span>
+            <span style={{ color: '#2563eb', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
+              Version V{document.current_version || 1}
+            </span>
+          </div>
+
+          {/* Status Tag */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '7px' }}>
+            <span style={{ color: 'var(--text-secondary)' }}>Status</span>
             <span style={{
-              padding: '1px 6px',
+              padding: '2px 7px',
               borderRadius: '4px',
-              background: 'rgba(255, 255, 255, 0.08)',
+              background: document.status === 'approved' ? 'rgba(16, 185, 129, 0.12)' :
+                          document.status === 'in_review' ? 'rgba(245, 158, 11, 0.12)' : 'rgba(100, 116, 139, 0.12)',
+              color: document.status === 'approved' ? '#059669' :
+                     document.status === 'in_review' ? '#d97706' : '#475569',
               textTransform: 'uppercase',
               fontSize: '0.72rem',
-              fontWeight: 600
+              fontWeight: 700
             }}>
               {document.status || 'draft'}
             </span>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255, 255, 255, 0.04)', paddingBottom: '6px' }}>
-            <span style={{ color: 'var(--text-muted)' }}>Owner</span>
-            <span style={{ color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+          {/* Owner */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '7px' }}>
+            <span style={{ color: 'var(--text-secondary)' }}>Owner</span>
+            <span style={{ color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 500 }}>
               <User size={13} color="var(--accent-blue)" />
               <span>Alex Rivera</span>
             </span>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255, 255, 255, 0.04)', paddingBottom: '6px' }}>
-            <span style={{ color: 'var(--text-muted)' }}>Synchronized Devices</span>
-            <span style={{ color: 'var(--text-primary)' }}>MacBook Pro, Pixel 8 Pro</span>
+          {/* Synchronized Devices */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '7px' }}>
+            <span style={{ color: 'var(--text-secondary)' }}>Synchronized Devices</span>
+            <span style={{ color: 'var(--text-primary)', fontSize: '0.78rem', fontWeight: 500 }}>MacBook, Pixel 8</span>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', borderBottom: '1px solid rgba(255, 255, 255, 0.04)', paddingBottom: '6px' }}>
-            <span style={{ color: 'var(--text-muted)' }}>Last Modified</span>
-            <span style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>
+          {/* Last Modified */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '7px' }}>
+            <span style={{ color: 'var(--text-secondary)' }}>Last Modified</span>
+            <span style={{ color: 'var(--text-primary)', fontSize: '0.75rem' }}>
               {formatTimestamp(document.updated_at)}
             </span>
           </div>
 
+          {/* Document ID */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-            <span style={{ color: 'var(--text-muted)' }}>Document ID</span>
-            <span style={{ color: 'var(--text-secondary)', fontSize: '0.7rem', fontFamily: 'var(--font-mono)' }}>
+            <span style={{ color: 'var(--text-secondary)' }}>Document ID</span>
+            <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem', fontFamily: 'var(--font-mono)' }}>
               {document.id}
             </span>
           </div>
         </div>
       </div>
 
-      {/* Sync Lab & Actions */}
+      {/* Actions: Version History & Sync Lab */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: 'auto', paddingTop: '16px', borderTop: '1px solid var(--border-subtle)' }}>
         <button
           className="btn btn-secondary btn-sm"
           onClick={onOpenHistory}
           style={{ width: '100%', justifyContent: 'flex-start', gap: '8px' }}
         >
-          <History size={14} color="#60a5fa" />
-          <span>Version History ({versionCount} revisions)</span>
+          <History size={14} color="#2563eb" />
+          <span>Version History · V{document.current_version || 1}{versionCount > 0 ? ` (${versionCount} revs)` : ''}</span>
         </button>
 
         <button
@@ -198,8 +246,8 @@ export const FileDetailsPanel: React.FC<FileDetailsPanelProps> = ({
             width: '100%',
             justifyContent: 'flex-start',
             gap: '8px',
-            borderColor: 'rgba(139, 92, 246, 0.4)',
-            color: '#c084fc'
+            borderColor: 'rgba(124, 58, 237, 0.3)',
+            color: '#7c3aed'
           }}
         >
           <Cpu size={14} />

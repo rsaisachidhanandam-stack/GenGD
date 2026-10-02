@@ -43,18 +43,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
             onClick={() => setShowNewMenu(!showNewMenu)}
             style={{
               width: '100%',
-              padding: '10px 16px',
-              borderRadius: 'var(--radius-lg)',
+              padding: '11px 18px',
+              borderRadius: '9999px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               gap: '10px',
-              fontSize: '0.9rem',
+              fontSize: '0.92rem',
               fontWeight: 700,
-              boxShadow: '0 4px 16px rgba(37, 99, 235, 0.4)'
+              boxShadow: '0 4px 14px rgba(37, 99, 235, 0.28)'
             }}
           >
-            <Plus size={18} strokeWidth={2.5} />
+            <Plus size={19} strokeWidth={2.5} />
             <span>New</span>
           </button>
 
@@ -63,11 +63,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <div
               style={{
                 position: 'absolute',
-                top: '48px',
+                top: '52px',
                 left: '0',
                 width: '100%',
-                background: 'var(--bg-surface-elevated)',
-                border: '1px solid var(--border-medium)',
+                background: '#ffffff',
+                border: '1px solid var(--border-subtle)',
                 borderRadius: 'var(--radius-md)',
                 boxShadow: 'var(--shadow-lg)',
                 padding: '6px',
@@ -89,10 +89,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   border: 'none',
                   padding: '8px 12px',
                   color: 'var(--text-primary)',
-                  borderRadius: 'var(--radius-sm)'
+                  borderRadius: 'var(--radius-sm)',
+                  boxShadow: 'none'
                 }}
               >
-                <FilePlus size={16} color="#3b82f6" />
+                <FilePlus size={16} color="#2563eb" />
                 <span>New Document (.md)</span>
               </button>
 
@@ -118,16 +119,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {/* Primary Navigation List */}
-        <nav style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+        <nav style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
           <div
             className={`sidebar-nav-item ${activeTab === 'drive' ? 'active' : ''}`}
             onClick={() => onNavigateTab('drive')}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <FolderClosed size={17} color={activeTab === 'drive' ? '#60a5fa' : 'var(--text-muted)'} />
-              <span>My Drive</span>
+              <FolderClosed size={17} color={activeTab === 'drive' ? '#2563eb' : 'var(--text-secondary)'} />
+              <span style={{ color: activeTab === 'drive' ? '#2563eb' : 'var(--text-primary)' }}>My Drive</span>
             </div>
-            {activeTab === 'drive' && <ChevronRight size={14} />}
+            {activeTab === 'drive' && <ChevronRight size={14} color="#2563eb" />}
           </div>
 
           <div
@@ -135,10 +136,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
             onClick={() => onNavigateTab('recent')}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <Clock size={17} color={activeTab === 'recent' ? '#60a5fa' : 'var(--text-muted)'} />
-              <span>Recent</span>
+              <Clock size={17} color={activeTab === 'recent' ? '#2563eb' : 'var(--text-secondary)'} />
+              <span style={{ color: activeTab === 'recent' ? '#2563eb' : 'var(--text-primary)' }}>Recent</span>
             </div>
-            {activeTab === 'recent' && <ChevronRight size={14} />}
+            {activeTab === 'recent' && <ChevronRight size={14} color="#2563eb" />}
           </div>
 
           <div
@@ -146,10 +147,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
             onClick={() => onNavigateTab('starred')}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <Star size={17} color={activeTab === 'starred' ? '#fbbf24' : 'var(--text-muted)'} />
-              <span>Starred</span>
+              <Star size={17} color={activeTab === 'starred' ? '#f59e0b' : 'var(--text-secondary)'} />
+              <span style={{ color: activeTab === 'starred' ? '#f59e0b' : 'var(--text-primary)' }}>Starred</span>
             </div>
-            {activeTab === 'starred' && <ChevronRight size={14} />}
+            {activeTab === 'starred' && <ChevronRight size={14} color="#f59e0b" />}
           </div>
 
           <div
@@ -157,23 +158,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
             onClick={() => onNavigateTab('conflicts')}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <AlertTriangle size={17} color={conflictCount > 0 ? '#fb7185' : 'var(--text-muted)'} />
-              <span>Conflicts</span>
+              <AlertTriangle size={17} color={conflictCount > 0 ? '#ef4444' : 'var(--text-secondary)'} />
+              <span style={{ color: activeTab === 'conflicts' ? '#ef4444' : 'var(--text-primary)' }}>Conflicts</span>
             </div>
-            {conflictCount > 0 && (
+            {conflictCount > 0 ? (
               <span
                 style={{
-                  background: '#f43f5e',
+                  background: '#ef4444',
                   color: '#ffffff',
                   fontSize: '0.7rem',
                   fontWeight: 700,
                   padding: '1px 6px',
                   borderRadius: '9999px',
-                  boxShadow: '0 0 8px rgba(244, 63, 94, 0.4)'
+                  boxShadow: '0 0 6px rgba(239, 68, 68, 0.35)'
                 }}
               >
                 {conflictCount}
               </span>
+            ) : (
+              activeTab === 'conflicts' && <ChevronRight size={14} color="#ef4444" />
             )}
           </div>
 
@@ -182,22 +185,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
             onClick={() => onNavigateTab('trash')}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <Trash2 size={17} color={activeTab === 'trash' ? '#60a5fa' : 'var(--text-muted)'} />
-              <span>Trash</span>
+              <Trash2 size={17} color={activeTab === 'trash' ? '#2563eb' : 'var(--text-secondary)'} />
+              <span style={{ color: activeTab === 'trash' ? '#2563eb' : 'var(--text-primary)' }}>Trash</span>
             </div>
+            {activeTab === 'trash' && <ChevronRight size={14} color="#2563eb" />}
           </div>
         </nav>
 
         {/* Sync Lab Feature Box (Hackathon Technical Demo) */}
-        <div style={{ marginTop: '12px' }}>
+        <div style={{ marginTop: '10px' }}>
           <div
             className={`sync-lab-btn ${activeTab === 'sync-lab' ? 'active' : ''}`}
             onClick={() => onNavigateTab('sync-lab')}
           >
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Cpu size={18} color="#c084fc" />
-                <span style={{ fontWeight: 700, fontSize: '0.85rem', color: '#f3e8ff' }}>
+                <Cpu size={17} color="#7c3aed" />
+                <span style={{ fontWeight: 700, fontSize: '0.85rem', color: '#6d28d9' }}>
                   Sync Lab
                 </span>
               </div>
@@ -206,8 +210,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   fontSize: '0.65rem',
                   textTransform: 'uppercase',
                   fontWeight: 800,
-                  background: 'rgba(192, 132, 252, 0.25)',
-                  color: '#e9d5ff',
+                  background: 'rgba(124, 58, 237, 0.12)',
+                  color: '#7c3aed',
                   padding: '2px 5px',
                   borderRadius: '4px'
                 }}
@@ -215,7 +219,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 PS-13
               </span>
             </div>
-            <div style={{ fontSize: '0.72rem', color: 'rgba(233, 213, 255, 0.7)', lineHeight: 1.3 }}>
+            <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', lineHeight: 1.35 }}>
               Dual-device simulator, 3-way merge & network chaos
             </div>
           </div>
@@ -223,22 +227,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {/* Bottom Section */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', paddingTop: '16px', borderTop: '1px solid var(--border-subtle)' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', paddingTop: '14px', borderTop: '1px solid var(--border-subtle)' }}>
         {/* Storage Usage Widget */}
-        <div style={{ padding: '8px 4px' }}>
+        <div style={{ padding: '6px 4px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-              <HardDrive size={14} />
-              <span>Storage</span>
+              <HardDrive size={14} color="var(--text-secondary)" />
+              <span style={{ fontWeight: 600 }}>Storage</span>
             </div>
             <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>1.2 GB / 15 GB</span>
           </div>
-          <div style={{ width: '100%', height: '5px', background: 'rgba(255, 255, 255, 0.1)', borderRadius: '9999px', overflow: 'hidden' }}>
+          <div style={{ width: '100%', height: '5px', background: 'rgba(226, 232, 240, 0.9)', borderRadius: '9999px', overflow: 'hidden' }}>
             <div
               style={{
                 width: '8%',
                 height: '100%',
-                background: 'linear-gradient(90deg, #3b82f6, #8b5cf6)',
+                background: 'linear-gradient(90deg, #2563eb, #7c3aed)',
                 borderRadius: '9999px'
               }}
             />
@@ -252,11 +256,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div
           className={`sidebar-nav-item ${activeTab === 'settings' ? 'active' : ''}`}
           onClick={() => onNavigateTab('settings')}
-          style={{ padding: '7px 8px' }}
+          style={{ padding: '7px 10px' }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Settings size={16} color="var(--text-muted)" />
-            <span>Settings & Diagnostics</span>
+            <Settings size={16} color={activeTab === 'settings' ? '#2563eb' : 'var(--text-secondary)'} />
+            <span style={{ color: activeTab === 'settings' ? '#2563eb' : 'var(--text-primary)' }}>Settings & Diagnostics</span>
           </div>
         </div>
 
@@ -265,11 +269,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <div
             className="sidebar-nav-item"
             onClick={onOpenQuickGuide}
-            style={{ padding: '7px 8px', cursor: 'pointer' }}
+            style={{ padding: '7px 10px', cursor: 'pointer' }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <HelpCircle size={16} color="#60a5fa" />
-              <span>Help & Quick Guide</span>
+              <HelpCircle size={16} color="#2563eb" />
+              <span style={{ color: 'var(--text-primary)' }}>Help & Quick Guide</span>
             </div>
           </div>
         )}

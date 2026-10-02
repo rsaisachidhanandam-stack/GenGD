@@ -107,191 +107,207 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         maxWidth: '440px',
         width: '100%',
         padding: '0',
-        boxShadow: '0 25px 60px rgba(0, 0, 0, 0.85)',
-        border: '1px solid var(--border-medium)',
+        boxShadow: '0 20px 50px -10px rgba(15, 23, 42, 0.16), 0 10px 20px -5px rgba(15, 23, 42, 0.08)',
+        border: '1px solid rgba(226, 232, 240, 0.95)',
+        borderRadius: 'var(--radius-xl)',
+        background: 'rgba(255, 255, 255, 0.96)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
         overflow: 'hidden'
       }}
     >
-        {/* Modal Header */}
+      {/* Modal Header */}
+      <div style={{
+        padding: '28px 28px 20px',
+        background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.04) 0%, rgba(124, 58, 237, 0.04) 100%)',
+        borderBottom: '1px solid var(--border-subtle)',
+        textAlign: 'center'
+      }}>
         <div style={{
-          padding: '24px 28px 18px',
-          background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%)',
-          borderBottom: '1px solid var(--border-subtle)',
-          textAlign: 'center'
+          width: '52px',
+          height: '52px',
+          borderRadius: '14px',
+          background: 'linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          margin: '0 auto 14px',
+          boxShadow: '0 6px 20px rgba(37, 99, 235, 0.3)'
         }}>
+          <Shield size={28} color="#ffffff" />
+        </div>
+        <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
+          Secure Multi-Device Sync
+        </h2>
+        <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', marginTop: '6px', lineHeight: 1.45 }}>
+          Keep your work synchronized without silently losing changes.
+        </p>
+      </div>
+
+      {/* Modal Body */}
+      <div style={{ padding: '24px 28px' }}>
+        {/* Error Banner */}
+        {errorMessage && (
           <div style={{
-            width: '48px',
-            height: '48px',
-            borderRadius: '12px',
-            background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+            padding: '10px 14px',
+            borderRadius: 'var(--radius-md)',
+            background: 'rgba(239, 68, 68, 0.08)',
+            border: '1px solid rgba(239, 68, 68, 0.25)',
+            color: '#dc2626',
+            fontSize: '0.82rem',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
-            margin: '0 auto 12px',
-            boxShadow: '0 6px 20px rgba(59, 130, 246, 0.4)'
+            gap: '8px',
+            marginBottom: '16px'
           }}>
-            <Shield size={26} color="#ffffff" />
+            <AlertCircle size={16} style={{ flexShrink: 0 }} />
+            <span>{errorMessage}</span>
           </div>
-          <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
-            {isRegister ? 'Create SyncSafe Account' : 'Sign in to SyncSafe'}
-          </h2>
-          <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
-            Secure multi-device file synchronization & conflict safety
-          </p>
+        )}
+
+        {/* Primary CTA: Continue as Demo */}
+        <button
+          type="button"
+          className="btn btn-primary"
+          onClick={handleQuickDemoLogin}
+          disabled={loading}
+          style={{
+            width: '100%',
+            padding: '12px',
+            marginBottom: '16px',
+            gap: '8px',
+            fontSize: '0.92rem',
+            fontWeight: 700
+          }}
+        >
+          <Sparkles size={16} />
+          <span>Continue as Demo</span>
+        </button>
+
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          margin: '14px 0',
+          color: 'var(--text-muted)',
+          fontSize: '0.75rem'
+        }}>
+          <div style={{ flex: 1, height: '1px', background: 'var(--border-subtle)' }} />
+          <span style={{ padding: '0 12px', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)', fontWeight: 600 }}>
+            or sign in with email
+          </span>
+          <div style={{ flex: 1, height: '1px', background: 'var(--border-subtle)' }} />
         </div>
 
-        {/* Modal Body */}
-        <div style={{ padding: '24px 28px' }}>
-          {/* Error Banner */}
-          {errorMessage && (
-            <div style={{
-              padding: '10px 14px',
-              borderRadius: 'var(--radius-md)',
-              background: 'rgba(244, 63, 94, 0.15)',
-              border: '1px solid rgba(244, 63, 94, 0.35)',
-              color: '#fda4af',
-              fontSize: '0.82rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              marginBottom: '16px'
-            }}>
-              <AlertCircle size={16} style={{ flexShrink: 0 }} />
-              <span>{errorMessage}</span>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          {isRegister && (
+            <div>
+              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '5px' }}>
+                Full Name
+              </label>
+              <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                <User size={15} color="var(--text-muted)" style={{ position: 'absolute', left: '12px' }} />
+                <input
+                  type="text"
+                  className="form-input"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Alex Rivera"
+                  style={{ paddingLeft: '36px' }}
+                  required
+                />
+              </div>
             </div>
           )}
 
-          {/* Quick Demo Sign In Button */}
+          <div>
+            <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '5px' }}>
+              Email Address
+            </label>
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+              <Mail size={15} color="var(--text-muted)" style={{ position: 'absolute', left: '12px' }} />
+              <input
+                type="email"
+                className="form-input"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="demo@syncsafe.io"
+                style={{ paddingLeft: '36px' }}
+                required
+              />
+            </div>
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '5px' }}>
+              Password
+            </label>
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+              <Lock size={15} color="var(--text-muted)" style={{ position: 'absolute', left: '12px' }} />
+              <input
+                type="password"
+                className="form-input"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                style={{ paddingLeft: '36px' }}
+                required
+              />
+            </div>
+          </div>
+
           <button
-            type="button"
-            className="btn btn-primary"
-            onClick={handleQuickDemoLogin}
+            type="submit"
+            className="btn btn-secondary"
             disabled={loading}
-            style={{
-              width: '100%',
-              padding: '11px',
-              marginBottom: '16px',
-              gap: '8px',
-              background: 'linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)',
-              fontWeight: 700
-            }}
+            style={{ width: '100%', padding: '10px', marginTop: '6px', gap: '8px', fontWeight: 700 }}
           >
-            <Sparkles size={16} />
-            <span>Continue as Demo (Alex Rivera)</span>
+            <span>{loading ? 'Authenticating...' : isRegister ? 'Create Account' : 'Sign In'}</span>
+            <ArrowRight size={15} />
           </button>
+        </form>
 
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            margin: '14px 0',
-            color: 'var(--text-muted)',
-            fontSize: '0.75rem'
-          }}>
-            <div style={{ flex: 1, height: '1px', background: 'var(--border-subtle)' }} />
-            <span style={{ padding: '0 10px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              or continue with email
+        {/* Toggle between Login and Register */}
+        <div style={{ textAlign: 'center', marginTop: '16px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+          {isRegister ? (
+            <span>
+              Already have an account?{' '}
+              <button
+                onClick={() => setIsRegister(false)}
+                style={{ background: 'transparent', border: 'none', color: '#2563eb', cursor: 'pointer', fontWeight: 700 }}
+              >
+                Sign In
+              </button>
             </span>
-            <div style={{ flex: 1, height: '1px', background: 'var(--border-subtle)' }} />
-          </div>
-
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            {isRegister && (
-              <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '5px' }}>
-                  Full Name
-                </label>
-                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                  <User size={15} color="var(--text-muted)" style={{ position: 'absolute', left: '12px' }} />
-                  <input
-                    type="text"
-                    className="form-input"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Alex Rivera"
-                    style={{ paddingLeft: '36px' }}
-                    required
-                  />
-                </div>
-              </div>
-            )}
-
-            <div>
-              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '5px' }}>
-                Email Address
-              </label>
-              <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                <Mail size={15} color="var(--text-muted)" style={{ position: 'absolute', left: '12px' }} />
-                <input
-                  type="email"
-                  className="form-input"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="demo@syncsafe.io"
-                  style={{ paddingLeft: '36px' }}
-                  required
-                />
-              </div>
-            </div>
-
-            <div>
-              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '5px' }}>
-                Password
-              </label>
-              <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                <Lock size={15} color="var(--text-muted)" style={{ position: 'absolute', left: '12px' }} />
-                <input
-                  type="password"
-                  className="form-input"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  style={{ paddingLeft: '36px' }}
-                  required
-                />
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              className="btn btn-secondary"
-              disabled={loading}
-              style={{ width: '100%', padding: '10px', marginTop: '6px', gap: '8px', fontWeight: 600 }}
-            >
-              <span>{loading ? 'Authenticating...' : isRegister ? 'Create Account' : 'Sign In'}</span>
-              <ArrowRight size={15} />
-            </button>
-          </form>
-
-          {/* Toggle between Login and Register */}
-          <div style={{ textAlign: 'center', marginTop: '16px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-            {isRegister ? (
-              <span>
-                Already have an account?{' '}
-                <button
-                  onClick={() => setIsRegister(false)}
-                  style={{ background: 'transparent', border: 'none', color: '#60a5fa', cursor: 'pointer', fontWeight: 600 }}
-                >
-                  Sign In
-                </button>
-              </span>
-            ) : (
-              <span>
-                Need an account?{' '}
-                <button
-                  onClick={() => setIsRegister(true)}
-                  style={{ background: 'transparent', border: 'none', color: '#60a5fa', cursor: 'pointer', fontWeight: 600 }}
-                >
-                  Create one
-                </button>
-              </span>
-            )}
-          </div>
+          ) : (
+            <span>
+              Need an account?{' '}
+              <button
+                onClick={() => setIsRegister(true)}
+                style={{ background: 'transparent', border: 'none', color: '#2563eb', cursor: 'pointer', fontWeight: 700 }}
+              >
+                Create one
+              </button>
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );
 
   if (isRootScreen) {
-    return modalBody;
+    return (
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '20px',
+        backgroundColor: 'var(--bg-app)',
+        backgroundImage: 'radial-gradient(circle at 15% 15%, rgba(37, 99, 235, 0.08) 0%, transparent 45%), radial-gradient(circle at 85% 20%, rgba(124, 58, 237, 0.07) 0%, transparent 50%)'
+      }}>
+        {modalBody}
+      </div>
+    );
   }
 
   return (

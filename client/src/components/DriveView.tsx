@@ -175,7 +175,8 @@ export const DriveView: React.FC<DriveViewProps> = ({
                 padding: '6px 28px 6px 12px',
                 fontSize: '0.8rem',
                 borderRadius: 'var(--radius-md)',
-                background: 'var(--bg-surface-elevated)',
+                background: '#ffffff',
+                border: '1px solid var(--border-medium)',
                 cursor: 'pointer'
               }}
             >
@@ -188,16 +189,17 @@ export const DriveView: React.FC<DriveViewProps> = ({
           {/* Grid / List Toggle */}
           <div style={{
             display: 'flex',
-            background: 'var(--bg-surface-elevated)',
+            background: '#ffffff',
             padding: '3px',
             borderRadius: 'var(--radius-md)',
-            border: '1px solid var(--border-medium)'
+            border: '1px solid var(--border-medium)',
+            boxShadow: 'var(--shadow-sm)'
           }}>
             <button
               onClick={() => setViewLayout('grid')}
               style={{
-                background: viewLayout === 'grid' ? 'rgba(59, 130, 246, 0.2)' : 'transparent',
-                color: viewLayout === 'grid' ? '#60a5fa' : 'var(--text-muted)',
+                background: viewLayout === 'grid' ? 'rgba(37, 99, 235, 0.1)' : 'transparent',
+                color: viewLayout === 'grid' ? '#2563eb' : 'var(--text-muted)',
                 border: 'none',
                 padding: '5px 8px',
                 borderRadius: 'var(--radius-sm)',
@@ -212,8 +214,8 @@ export const DriveView: React.FC<DriveViewProps> = ({
             <button
               onClick={() => setViewLayout('list')}
               style={{
-                background: viewLayout === 'list' ? 'rgba(59, 130, 246, 0.2)' : 'transparent',
-                color: viewLayout === 'list' ? '#60a5fa' : 'var(--text-muted)',
+                background: viewLayout === 'list' ? 'rgba(37, 99, 235, 0.1)' : 'transparent',
+                color: viewLayout === 'list' ? '#2563eb' : 'var(--text-muted)',
                 border: 'none',
                 padding: '5px 8px',
                 borderRadius: 'var(--radius-sm)',
@@ -229,23 +231,26 @@ export const DriveView: React.FC<DriveViewProps> = ({
         </div>
       </div>
 
-      {/* Real Sync Activity Bar */}
+      {/* Real Sync Activity Bar - Small Glass Status Strip */}
       {recentActivities.length > 0 && (
         <div style={{
-          background: 'rgba(22, 32, 54, 0.5)',
+          background: 'rgba(255, 255, 255, 0.85)',
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
           border: '1px solid var(--border-subtle)',
           borderRadius: 'var(--radius-lg)',
           padding: '12px 18px',
           display: 'flex',
           alignItems: 'center',
           gap: '16px',
-          overflowX: 'auto'
+          overflowX: 'auto',
+          boxShadow: 'var(--shadow-sm)'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--accent-blue)', fontSize: '0.78rem', fontWeight: 700, flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--accent-blue)', fontSize: '0.8rem', fontWeight: 700, flexShrink: 0 }}>
             <Activity size={15} />
             <span>Recent Sync Activity:</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
             {recentActivities.map((act) => (
               <div
                 key={act.id}
@@ -256,13 +261,14 @@ export const DriveView: React.FC<DriveViewProps> = ({
                   fontSize: '0.78rem',
                   padding: '4px 10px',
                   borderRadius: '9999px',
-                  background: act.type === 'conflict' ? 'rgba(244, 63, 94, 0.15)' :
-                              act.type === 'merge' ? 'rgba(139, 92, 246, 0.15)' : 'rgba(59, 130, 246, 0.12)',
-                  border: act.type === 'conflict' ? '1px solid rgba(244, 63, 94, 0.3)' :
-                          act.type === 'merge' ? '1px solid rgba(139, 92, 246, 0.3)' : '1px solid rgba(59, 130, 246, 0.25)',
-                  color: act.type === 'conflict' ? '#fb7185' :
-                         act.type === 'merge' ? '#c084fc' : '#93c5fd',
-                  flexShrink: 0
+                  background: act.type === 'conflict' ? 'rgba(239, 68, 68, 0.08)' :
+                              act.type === 'merge' ? 'rgba(124, 58, 237, 0.08)' : 'rgba(37, 99, 235, 0.08)',
+                  border: act.type === 'conflict' ? '1px solid rgba(239, 68, 68, 0.25)' :
+                          act.type === 'merge' ? '1px solid rgba(124, 58, 237, 0.25)' : '1px solid rgba(37, 99, 235, 0.2)',
+                  color: act.type === 'conflict' ? '#dc2626' :
+                         act.type === 'merge' ? '#7c3aed' : '#2563eb',
+                  flexShrink: 0,
+                  fontWeight: 500
                 }}
               >
                 {act.type === 'conflict' ? <AlertTriangle size={12} /> :
@@ -280,10 +286,11 @@ export const DriveView: React.FC<DriveViewProps> = ({
         <div style={{
           textAlign: 'center',
           padding: '60px 20px',
-          background: 'var(--bg-surface)',
+          background: 'rgba(255, 255, 255, 0.82)',
           borderRadius: 'var(--radius-xl)',
           border: '1px solid var(--border-subtle)',
-          color: 'var(--text-secondary)'
+          color: 'var(--text-secondary)',
+          boxShadow: 'var(--shadow-sm)'
         }}>
           <RefreshCw size={24} className="animate-spin" color="var(--accent-blue)" style={{ margin: '0 auto 12px' }} />
           <p style={{ fontSize: '0.9rem', fontWeight: 500 }}>Loading documents...</p>
@@ -292,9 +299,10 @@ export const DriveView: React.FC<DriveViewProps> = ({
         <div style={{
           textAlign: 'center',
           padding: '60px 20px',
-          background: 'var(--bg-surface)',
+          background: 'rgba(255, 255, 255, 0.82)',
           borderRadius: 'var(--radius-xl)',
-          border: '1px dashed var(--border-medium)'
+          border: '1px dashed var(--border-medium)',
+          boxShadow: 'var(--shadow-sm)'
         }}>
           <FolderOpen size={40} color="var(--text-muted)" style={{ margin: '0 auto 12px' }} />
           <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)' }}>
@@ -309,7 +317,7 @@ export const DriveView: React.FC<DriveViewProps> = ({
           </button>
         </div>
       ) : viewLayout === 'grid' ? (
-        /* Grid Layout */
+        /* Grid Layout: Redesigned Document Cards */
         <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
@@ -326,18 +334,18 @@ export const DriveView: React.FC<DriveViewProps> = ({
                 onClick={() => onSelectDoc(doc)}
                 onDoubleClick={() => onOpenDoc(doc)}
               >
-                {/* Card Top: Icon & Status */}
+                {/* Card Top: 📄 Icon & Synced Status Badge */}
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '10px' }}>
                   <div style={{
                     width: '38px',
                     height: '38px',
                     borderRadius: '10px',
-                    background: 'rgba(59, 130, 246, 0.12)',
-                    border: '1px solid rgba(59, 130, 246, 0.25)',
+                    background: 'rgba(37, 99, 235, 0.08)',
+                    border: '1px solid rgba(37, 99, 235, 0.18)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    color: '#60a5fa'
+                    color: '#2563eb'
                   }}>
                     <FileText size={20} />
                   </div>
@@ -368,7 +376,8 @@ export const DriveView: React.FC<DriveViewProps> = ({
                     fontSize: '0.95rem',
                     color: 'var(--text-primary)',
                     marginBottom: '4px',
-                    wordBreak: 'break-word'
+                    wordBreak: 'break-word',
+                    lineHeight: 1.3
                   }}>
                     {doc.name || doc.title || 'Untitled Document.md'}
                   </div>
@@ -385,30 +394,32 @@ export const DriveView: React.FC<DriveViewProps> = ({
                   )}
                 </div>
 
-                {/* Structured Metadata Row */}
+                {/* Structured Metadata Row: DRAFT | Markdown (.md) */}
                 <div style={{
-                  padding: '8px 10px',
+                  padding: '7px 10px',
                   borderRadius: 'var(--radius-sm)',
-                  background: 'rgba(0, 0, 0, 0.2)',
+                  background: 'rgba(241, 245, 249, 0.85)',
                   fontSize: '0.75rem',
                   display: 'flex',
                   justifyContent: 'space-between',
-                  alignItems: 'center'
+                  alignItems: 'center',
+                  border: '1px solid rgba(226, 232, 240, 0.8)'
                 }}>
                   <span style={{
                     padding: '2px 6px',
                     borderRadius: '4px',
-                    background: doc.status === 'approved' ? 'rgba(16, 185, 129, 0.2)' :
-                                doc.status === 'in_review' ? 'rgba(245, 158, 11, 0.2)' : 'rgba(100, 116, 139, 0.2)',
-                    color: doc.status === 'approved' ? '#6ee7b7' :
-                           doc.status === 'in_review' ? '#fcd34d' : '#cbd5e1',
-                    fontWeight: 600,
+                    background: doc.status === 'approved' ? 'rgba(16, 185, 129, 0.12)' :
+                                doc.status === 'in_review' ? 'rgba(245, 158, 11, 0.12)' : 'rgba(100, 116, 139, 0.12)',
+                    color: doc.status === 'approved' ? '#059669' :
+                           doc.status === 'in_review' ? '#d97706' : '#475569',
+                    fontWeight: 700,
                     textTransform: 'uppercase',
-                    fontSize: '0.68rem'
+                    fontSize: '0.68rem',
+                    letterSpacing: '0.03em'
                   }}>
                     {doc.status || 'draft'}
                   </span>
-                  <span style={{ color: 'var(--text-muted)' }}>
+                  <span style={{ color: 'var(--text-secondary)', fontSize: '0.72rem', fontWeight: 500 }}>
                     Markdown (.md)
                   </span>
                 </div>
@@ -430,7 +441,7 @@ export const DriveView: React.FC<DriveViewProps> = ({
                       e.stopPropagation();
                       onOpenDoc(doc);
                     }}
-                    style={{ padding: '3px 8px', fontSize: '0.72rem' }}
+                    style={{ padding: '3px 9px', fontSize: '0.72rem', fontWeight: 600 }}
                   >
                     Open
                   </button>
@@ -442,15 +453,18 @@ export const DriveView: React.FC<DriveViewProps> = ({
       ) : (
         /* List Layout */
         <div style={{
-          background: 'var(--bg-surface)',
+          background: 'rgba(255, 255, 255, 0.9)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
           borderRadius: 'var(--radius-lg)',
           border: '1px solid var(--border-subtle)',
+          boxShadow: 'var(--shadow-sm)',
           overflow: 'hidden'
         }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
             <thead>
               <tr style={{
-                background: 'var(--bg-surface-elevated)',
+                background: 'rgba(248, 250, 252, 0.95)',
                 borderBottom: '1px solid var(--border-medium)',
                 color: 'var(--text-secondary)',
                 fontSize: '0.75rem',
@@ -477,18 +491,18 @@ export const DriveView: React.FC<DriveViewProps> = ({
                     style={{
                       borderBottom: '1px solid var(--border-subtle)',
                       cursor: 'pointer',
-                      background: isSelected ? 'rgba(59, 130, 246, 0.08)' : 'transparent',
+                      background: isSelected ? 'rgba(37, 99, 235, 0.05)' : 'transparent',
                       transition: 'background 0.15s ease'
                     }}
                     onMouseEnter={(e) => {
-                      if (!isSelected) e.currentTarget.style.background = 'var(--bg-card-hover)';
+                      if (!isSelected) e.currentTarget.style.background = 'rgba(241, 245, 249, 0.6)';
                     }}
                     onMouseLeave={(e) => {
                       if (!isSelected) e.currentTarget.style.background = 'transparent';
                     }}
                   >
                     <td style={{ padding: '12px 18px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <FileText size={18} color="#60a5fa" />
+                      <FileText size={18} color="#2563eb" />
                       <div>
                         <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
                           {doc.name || doc.title || 'Untitled Document.md'}
@@ -504,7 +518,7 @@ export const DriveView: React.FC<DriveViewProps> = ({
                       <span style={{
                         padding: '2px 6px',
                         borderRadius: '4px',
-                        background: 'rgba(255, 255, 255, 0.06)',
+                        background: 'rgba(241, 245, 249, 0.9)',
                         color: 'var(--text-secondary)',
                         fontSize: '0.75rem',
                         fontWeight: 600,
@@ -513,7 +527,7 @@ export const DriveView: React.FC<DriveViewProps> = ({
                         {doc.status || 'draft'}
                       </span>
                     </td>
-                    <td style={{ padding: '12px 18px', fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: '#93c5fd' }}>
+                    <td style={{ padding: '12px 18px', fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: '#2563eb', fontWeight: 600 }}>
                       V{doc.current_version || 1}
                     </td>
                     <td style={{ padding: '12px 18px' }}>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { AlertTriangle, GitMerge, CheckCircle2 } from 'lucide-react';
+import { AlertTriangle, GitMerge, CheckCircle2, ShieldCheck, X } from 'lucide-react';
 
 interface ConflictRecord {
   id: string;
@@ -71,47 +71,64 @@ export const ConflictResolverModal: React.FC<ConflictResolverModalProps> = ({
 
   return (
     <div className="modal-overlay">
-      <div className="modal-content fade-in" style={{ maxWidth: '980px', maxHeight: '92vh' }}>
+      <div className="modal-content fade-in" style={{ maxWidth: '1000px', maxHeight: '92vh' }}>
         {/* Header */}
         <div style={{
-          padding: '16px 24px',
-          background: 'rgba(244, 63, 94, 0.1)',
-          borderBottom: '1px solid rgba(244, 63, 94, 0.25)',
+          padding: '18px 24px',
+          background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.06) 0%, rgba(245, 158, 11, 0.06) 100%)',
+          borderBottom: '1px solid rgba(239, 68, 68, 0.2)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div style={{
-              width: '36px',
-              height: '36px',
-              borderRadius: '8px',
-              background: 'rgba(244, 63, 94, 0.2)',
+              width: '40px',
+              height: '40px',
+              borderRadius: '10px',
+              background: 'rgba(239, 68, 68, 0.12)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#fb7185'
+              color: '#dc2626',
+              border: '1px solid rgba(239, 68, 68, 0.25)'
             }}>
-              <AlertTriangle size={20} />
+              <AlertTriangle size={22} />
             </div>
             <div>
-              <h2 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#f8fafc' }}>
-                Conflict Detected: Stale Base Version Modified Concurrently
-              </h2>
-              <p style={{ fontSize: '0.75rem', color: '#fda4af' }}>
-                Incoming edit was based on Version {conflict.base_version}, but Server has already advanced to Version {conflict.server_version}.
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <h2 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.01em' }}>
+                  Concurrent Conflict Detected · Both Changes Preserved Safely
+                </h2>
+                <span style={{
+                  fontSize: '0.68rem',
+                  padding: '2px 7px',
+                  borderRadius: '4px',
+                  background: 'rgba(16, 185, 129, 0.12)',
+                  color: '#059669',
+                  fontWeight: 700,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px'
+                }}>
+                  <ShieldCheck size={12} />
+                  Zero Data Loss
+                </span>
+              </div>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                We did NOT overwrite either change. Incoming edit was based on Version {conflict.base_version}, but Server had already reached Version {conflict.server_version}.
               </p>
             </div>
           </div>
-          <button className="btn btn-outline btn-sm" onClick={onClose}>
-            ✕ Close
+          <button className="btn btn-ghost btn-sm" onClick={onClose} style={{ padding: '6px' }}>
+            <X size={18} />
           </button>
         </div>
 
-        {/* Conflicting Fields Alert */}
+        {/* Conflicting Fields Strip */}
         <div style={{
           padding: '10px 24px',
-          background: 'var(--bg-surface-elevated)',
+          background: 'rgba(248, 250, 252, 0.95)',
           borderBottom: '1px solid var(--border-subtle)',
           display: 'flex',
           alignItems: 'center',
@@ -122,162 +139,173 @@ export const ConflictResolverModal: React.FC<ConflictResolverModalProps> = ({
           </span>
           {conflict.conflicting_fields.map((f) => (
             <span key={f} style={{
-              background: 'rgba(244, 63, 94, 0.2)',
-              color: '#fda4af',
+              background: 'rgba(239, 68, 68, 0.1)',
+              color: '#dc2626',
               fontSize: '0.75rem',
               fontWeight: 700,
               padding: '2px 8px',
               borderRadius: '4px',
-              border: '1px solid rgba(244, 63, 94, 0.4)'
+              border: '1px solid rgba(239, 68, 68, 0.25)'
             }}>
               {f.toUpperCase()}
             </span>
           ))}
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginLeft: 'auto' }}>
+            Non-conflicting fields have already been merged automatically.
+          </span>
         </div>
 
         {/* 3-Way Diff Comparison Columns */}
         <div style={{
-          padding: '16px 24px',
+          padding: '20px 24px',
           overflowY: 'auto',
           flex: 1,
           display: 'flex',
           flexDirection: 'column',
-          gap: '16px'
+          gap: '18px'
         }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px' }}>
-            {/* Column 1: Base Version (V1) */}
+            {/* Column 1: BASE (V1) */}
             <div style={{
-              background: 'rgba(15, 23, 42, 0.6)',
+              background: '#ffffff',
               border: '1px solid var(--border-subtle)',
-              borderRadius: 'var(--radius-md)',
-              padding: '12px',
+              borderRadius: 'var(--radius-lg)',
+              padding: '14px',
               display: 'flex',
               flexDirection: 'column',
-              gap: '8px'
+              gap: '10px',
+              boxShadow: 'var(--shadow-sm)'
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '6px' }}>
-                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)' }}>
-                  ORIGINAL BASE (V{conflict.base_version})
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '8px' }}>
+                <span style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-secondary)', letterSpacing: '0.04em' }}>
+                  BASE (V{conflict.base_version})
                 </span>
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Common Ancestor</span>
               </div>
-              <div style={{ fontSize: '0.8rem' }}>
-                <div style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>Title:</div>
-                <div style={{ fontWeight: 600 }}>{conflict.base_state.title}</div>
+              <div style={{ fontSize: '0.82rem' }}>
+                <div style={{ color: 'var(--text-muted)', fontSize: '0.72rem', fontWeight: 600 }}>Title:</div>
+                <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{conflict.base_state.title}</div>
               </div>
-              <div style={{ fontSize: '0.8rem' }}>
-                <div style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>Status:</div>
-                <div><span className="badge badge-offline">{conflict.base_state.status}</span></div>
+              <div style={{ fontSize: '0.82rem' }}>
+                <div style={{ color: 'var(--text-muted)', fontSize: '0.72rem', fontWeight: 600 }}>Status:</div>
+                <div style={{ marginTop: '2px' }}><span className="badge badge-offline">{conflict.base_state.status}</span></div>
               </div>
-              <div style={{ fontSize: '0.8rem' }}>
-                <div style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>Content:</div>
+              <div style={{ fontSize: '0.82rem' }}>
+                <div style={{ color: 'var(--text-muted)', fontSize: '0.72rem', fontWeight: 600, marginBottom: '4px' }}>Content:</div>
                 <div style={{
-                  background: 'rgba(0,0,0,0.3)',
-                  padding: '8px',
-                  borderRadius: '4px',
+                  background: 'rgba(241, 245, 249, 0.85)',
+                  padding: '10px',
+                  borderRadius: 'var(--radius-sm)',
                   fontFamily: 'var(--font-mono)',
-                  fontSize: '0.75rem',
-                  maxHeight: '120px',
-                  overflowY: 'auto'
+                  fontSize: '0.76rem',
+                  color: 'var(--text-primary)',
+                  maxHeight: '130px',
+                  overflowY: 'auto',
+                  border: '1px solid var(--border-subtle)'
                 }}>
                   {conflict.base_state.content}
                 </div>
               </div>
             </div>
 
-            {/* Column 2: Server Version (V2) */}
+            {/* Column 2: SERVER (V2) */}
             <div style={{
-              background: resolutionMode === 'server' ? 'rgba(59, 130, 246, 0.12)' : 'rgba(15, 23, 42, 0.6)',
-              border: resolutionMode === 'server' ? '1px solid var(--accent-blue)' : '1px solid var(--border-subtle)',
-              borderRadius: 'var(--radius-md)',
-              padding: '12px',
+              background: resolutionMode === 'server' ? 'rgba(37, 99, 235, 0.04)' : '#ffffff',
+              border: resolutionMode === 'server' ? '2px solid var(--accent-blue)' : '1px solid var(--border-subtle)',
+              borderRadius: 'var(--radius-lg)',
+              padding: '14px',
               display: 'flex',
               flexDirection: 'column',
-              gap: '8px',
+              gap: '10px',
+              boxShadow: resolutionMode === 'server' ? '0 4px 14px rgba(37, 99, 235, 0.15)' : 'var(--shadow-sm)',
               transition: 'all 0.2s'
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '6px' }}>
-                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#60a5fa' }}>
-                  SERVER CURRENT (V{conflict.server_version})
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '8px' }}>
+                <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#2563eb', letterSpacing: '0.04em' }}>
+                  SERVER (V{conflict.server_version})
                 </span>
                 <button
                   className={`btn btn-sm ${resolutionMode === 'server' ? 'btn-primary' : 'btn-outline'}`}
-                  style={{ fontSize: '0.7rem', padding: '2px 8px' }}
+                  style={{ fontSize: '0.72rem', padding: '3px 9px' }}
                   onClick={() => setResolutionMode('server')}
                 >
-                  {resolutionMode === 'server' ? '✓ Selected' : 'Choose Server'}
+                  {resolutionMode === 'server' ? '✓ Selected' : 'Keep Server'}
                 </button>
               </div>
-              <div style={{ fontSize: '0.8rem' }}>
-                <div style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>Title:</div>
-                <div style={{ fontWeight: 600, color: conflict.conflicting_fields.includes('title') ? '#93c5fd' : 'inherit' }}>
+              <div style={{ fontSize: '0.82rem' }}>
+                <div style={{ color: 'var(--text-muted)', fontSize: '0.72rem', fontWeight: 600 }}>Title:</div>
+                <div style={{ fontWeight: 600, color: conflict.conflicting_fields.includes('title') ? '#2563eb' : 'var(--text-primary)' }}>
                   {conflict.server_state.title}
                 </div>
               </div>
-              <div style={{ fontSize: '0.8rem' }}>
-                <div style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>Status:</div>
-                <div><span className="badge badge-synced">{conflict.server_state.status}</span></div>
+              <div style={{ fontSize: '0.82rem' }}>
+                <div style={{ color: 'var(--text-muted)', fontSize: '0.72rem', fontWeight: 600 }}>Status:</div>
+                <div style={{ marginTop: '2px' }}><span className="badge badge-synced">{conflict.server_state.status}</span></div>
               </div>
-              <div style={{ fontSize: '0.8rem' }}>
-                <div style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>Content:</div>
+              <div style={{ fontSize: '0.82rem' }}>
+                <div style={{ color: 'var(--text-muted)', fontSize: '0.72rem', fontWeight: 600, marginBottom: '4px' }}>Content:</div>
                 <div style={{
-                  background: 'rgba(0,0,0,0.3)',
-                  padding: '8px',
-                  borderRadius: '4px',
+                  background: 'rgba(241, 245, 249, 0.85)',
+                  padding: '10px',
+                  borderRadius: 'var(--radius-sm)',
                   fontFamily: 'var(--font-mono)',
-                  fontSize: '0.75rem',
-                  maxHeight: '120px',
+                  fontSize: '0.76rem',
+                  color: 'var(--text-primary)',
+                  maxHeight: '130px',
                   overflowY: 'auto',
-                  border: conflict.conflicting_fields.includes('content') ? '1px solid rgba(59, 130, 246, 0.4)' : 'none'
+                  border: conflict.conflicting_fields.includes('content') ? '1px solid rgba(37, 99, 235, 0.4)' : '1px solid var(--border-subtle)'
                 }}>
                   {conflict.server_state.content}
                 </div>
               </div>
             </div>
 
-            {/* Column 3: Incoming Device Edit */}
+            {/* Column 3: INCOMING */}
             <div style={{
-              background: resolutionMode === 'incoming' ? 'rgba(139, 92, 246, 0.12)' : 'rgba(15, 23, 42, 0.6)',
-              border: resolutionMode === 'incoming' ? '1px solid var(--accent-purple)' : '1px solid var(--border-subtle)',
-              borderRadius: 'var(--radius-md)',
-              padding: '12px',
+              background: resolutionMode === 'incoming' ? 'rgba(124, 58, 237, 0.04)' : '#ffffff',
+              border: resolutionMode === 'incoming' ? '2px solid var(--accent-purple)' : '1px solid var(--border-subtle)',
+              borderRadius: 'var(--radius-lg)',
+              padding: '14px',
               display: 'flex',
               flexDirection: 'column',
-              gap: '8px',
+              gap: '10px',
+              boxShadow: resolutionMode === 'incoming' ? '0 4px 14px rgba(124, 58, 237, 0.15)' : 'var(--shadow-sm)',
               transition: 'all 0.2s'
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '6px' }}>
-                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#c084fc' }}>
-                  MY OFFLINE CHANGE
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '8px' }}>
+                <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#7c3aed', letterSpacing: '0.04em' }}>
+                  INCOMING (MY EDIT)
                 </span>
                 <button
                   className={`btn btn-sm ${resolutionMode === 'incoming' ? 'btn-primary' : 'btn-outline'}`}
-                  style={{ fontSize: '0.7rem', padding: '2px 8px' }}
+                  style={{ fontSize: '0.72rem', padding: '3px 9px', background: resolutionMode === 'incoming' ? '#7c3aed' : undefined }}
                   onClick={() => setResolutionMode('incoming')}
                 >
-                  {resolutionMode === 'incoming' ? '✓ Selected' : 'Choose Mine'}
+                  {resolutionMode === 'incoming' ? '✓ Selected' : 'Keep Mine'}
                 </button>
               </div>
-              <div style={{ fontSize: '0.8rem' }}>
-                <div style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>Title:</div>
-                <div style={{ fontWeight: 600, color: conflict.conflicting_fields.includes('title') ? '#d8b4fe' : 'inherit' }}>
+              <div style={{ fontSize: '0.82rem' }}>
+                <div style={{ color: 'var(--text-muted)', fontSize: '0.72rem', fontWeight: 600 }}>Title:</div>
+                <div style={{ fontWeight: 600, color: conflict.conflicting_fields.includes('title') ? '#7c3aed' : 'var(--text-primary)' }}>
                   {conflict.incoming_state.title}
                 </div>
               </div>
-              <div style={{ fontSize: '0.8rem' }}>
-                <div style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>Status:</div>
-                <div><span className="badge badge-pending">{conflict.incoming_state.status}</span></div>
+              <div style={{ fontSize: '0.82rem' }}>
+                <div style={{ color: 'var(--text-muted)', fontSize: '0.72rem', fontWeight: 600 }}>Status:</div>
+                <div style={{ marginTop: '2px' }}><span className="badge badge-pending">{conflict.incoming_state.status}</span></div>
               </div>
-              <div style={{ fontSize: '0.8rem' }}>
-                <div style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>Content:</div>
+              <div style={{ fontSize: '0.82rem' }}>
+                <div style={{ color: 'var(--text-muted)', fontSize: '0.72rem', fontWeight: 600, marginBottom: '4px' }}>Content:</div>
                 <div style={{
-                  background: 'rgba(0,0,0,0.3)',
-                  padding: '8px',
-                  borderRadius: '4px',
+                  background: 'rgba(241, 245, 249, 0.85)',
+                  padding: '10px',
+                  borderRadius: 'var(--radius-sm)',
                   fontFamily: 'var(--font-mono)',
-                  fontSize: '0.75rem',
-                  maxHeight: '120px',
+                  fontSize: '0.76rem',
+                  color: 'var(--text-primary)',
+                  maxHeight: '130px',
                   overflowY: 'auto',
-                  border: conflict.conflicting_fields.includes('content') ? '1px solid rgba(139, 92, 246, 0.4)' : 'none'
+                  border: conflict.conflicting_fields.includes('content') ? '1px solid rgba(124, 58, 237, 0.4)' : '1px solid var(--border-subtle)'
                 }}>
                   {conflict.incoming_state.content}
                 </div>
@@ -287,16 +315,17 @@ export const ConflictResolverModal: React.FC<ConflictResolverModalProps> = ({
 
           {/* Interactive Resolution Editor */}
           <div style={{
-            background: 'var(--bg-surface-elevated)',
-            border: '1px solid var(--border-medium)',
-            borderRadius: 'var(--radius-md)',
-            padding: '14px'
+            background: '#ffffff',
+            border: '1px solid var(--border-subtle)',
+            borderRadius: 'var(--radius-lg)',
+            padding: '16px',
+            boxShadow: 'var(--shadow-sm)'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <GitMerge size={16} color="var(--accent-emerald)" />
-                <span style={{ fontSize: '0.85rem', fontWeight: 700 }}>
-                  Resolution Preview & Custom Merge (Becomes Version {conflict.server_version + 1})
+                <GitMerge size={17} color="#059669" />
+                <span style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                  Resolution Preview & Merge Mode (Will create Version {conflict.server_version + 1})
                 </span>
               </div>
               <div style={{ display: 'flex', gap: '6px' }}>
@@ -304,13 +333,14 @@ export const ConflictResolverModal: React.FC<ConflictResolverModalProps> = ({
                   className={`btn btn-sm ${resolutionMode === 'server' ? 'btn-primary' : 'btn-outline'}`}
                   onClick={() => setResolutionMode('server')}
                 >
-                  Use Server
+                  Keep Server
                 </button>
                 <button
                   className={`btn btn-sm ${resolutionMode === 'incoming' ? 'btn-primary' : 'btn-outline'}`}
+                  style={resolutionMode === 'incoming' ? { background: '#7c3aed' } : undefined}
                   onClick={() => setResolutionMode('incoming')}
                 >
-                  Use Mine
+                  Keep Mine
                 </button>
                 <button
                   className={`btn btn-sm ${resolutionMode === 'custom' ? 'btn-primary' : 'btn-outline'}`}
@@ -322,10 +352,12 @@ export const ConflictResolverModal: React.FC<ConflictResolverModalProps> = ({
             </div>
 
             {resolutionMode === 'custom' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '10px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '12px' }}>
                   <div>
-                    <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Resolved Title:</label>
+                    <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600, display: 'block', marginBottom: '4px' }}>
+                      Resolved Title:
+                    </label>
                     <input
                       className="form-input"
                       value={customTitle}
@@ -333,7 +365,9 @@ export const ConflictResolverModal: React.FC<ConflictResolverModalProps> = ({
                     />
                   </div>
                   <div>
-                    <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Resolved Status:</label>
+                    <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600, display: 'block', marginBottom: '4px' }}>
+                      Resolved Status:
+                    </label>
                     <select
                       className="form-select"
                       value={customStatus}
@@ -348,7 +382,9 @@ export const ConflictResolverModal: React.FC<ConflictResolverModalProps> = ({
                 </div>
 
                 <div>
-                  <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Resolved Description:</label>
+                  <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600, display: 'block', marginBottom: '4px' }}>
+                    Resolved Description:
+                  </label>
                   <input
                     className="form-input"
                     value={customDesc}
@@ -357,12 +393,15 @@ export const ConflictResolverModal: React.FC<ConflictResolverModalProps> = ({
                 </div>
 
                 <div>
-                  <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Resolved Content:</label>
+                  <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600, display: 'block', marginBottom: '4px' }}>
+                    Resolved Content (Combined Markdown):
+                  </label>
                   <textarea
                     className="form-textarea code-mode"
-                    rows={5}
+                    rows={6}
                     value={customContent}
                     onChange={(e) => setCustomContent(e.target.value)}
+                    style={{ background: '#ffffff', color: 'var(--text-primary)', border: '1px solid var(--border-medium)' }}
                   />
                 </div>
               </div>
@@ -373,14 +412,14 @@ export const ConflictResolverModal: React.FC<ConflictResolverModalProps> = ({
         {/* Footer */}
         <div style={{
           padding: '14px 24px',
-          background: 'rgba(15, 23, 42, 0.95)',
+          background: 'rgba(248, 250, 252, 0.95)',
           borderTop: '1px solid var(--border-subtle)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between'
         }}>
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-            Resolution creates an immutable Version {conflict.server_version + 1} and converges both devices.
+          <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+            Resolution commits an immutable Version {conflict.server_version + 1} and converges both paired devices safely.
           </span>
           <div style={{ display: 'flex', gap: '10px' }}>
             <button className="btn btn-outline" onClick={onClose} disabled={resolving}>
@@ -390,9 +429,10 @@ export const ConflictResolverModal: React.FC<ConflictResolverModalProps> = ({
               className="btn btn-success"
               onClick={handleApplyResolution}
               disabled={resolving}
+              style={{ fontWeight: 700 }}
             >
               <CheckCircle2 size={16} />
-              {resolving ? 'Applying Resolution...' : `Commit Resolution (Create V${conflict.server_version + 1})`}
+              <span>{resolving ? 'Applying Resolution...' : `Commit Resolution (Create V${conflict.server_version + 1})`}</span>
             </button>
           </div>
         </div>

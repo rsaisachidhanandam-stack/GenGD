@@ -148,16 +148,19 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
       {/* Top Workspace Header */}
       <div style={{
         padding: '14px 28px',
-        background: 'rgba(15, 23, 42, 0.95)',
+        background: 'rgba(255, 255, 255, 0.85)',
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
         borderBottom: '1px solid var(--border-subtle)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         flexWrap: 'wrap',
-        gap: '14px'
+        gap: '14px',
+        boxShadow: 'var(--shadow-sm)'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          {/* Back Button */}
+          {/* Back Button: ← My Drive */}
           <button
             className="btn btn-outline btn-sm"
             onClick={onBackToDrive}
@@ -172,7 +175,7 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
               {doc.name || 'Document.md'}
             </span>
 
-            {/* Sync Status Badge */}
+            {/* Sync Status Badge: Synced · V1 */}
             {hasConflict ? (
               <button
                 className="badge badge-conflict"
@@ -208,15 +211,16 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
 
         {/* Action Controls */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          {/* Device Context Switcher for Demonstration */}
+          {/* Current Device Context Switcher (MacBook / Pixel 8 context) */}
           <div style={{
             display: 'flex',
             alignItems: 'center',
-            background: 'var(--bg-surface-elevated)',
+            background: '#ffffff',
             padding: '2px',
             borderRadius: 'var(--radius-md)',
             border: '1px solid var(--border-medium)',
-            fontSize: '0.75rem'
+            fontSize: '0.75rem',
+            boxShadow: 'var(--shadow-sm)'
           }}>
             <button
               onClick={() => setActiveDeviceId('device-laptop-001')}
@@ -224,11 +228,11 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 gap: '5px',
-                padding: '4px 8px',
+                padding: '4px 9px',
                 borderRadius: 'var(--radius-sm)',
                 border: 'none',
-                background: activeDeviceId === 'device-laptop-001' ? 'rgba(59, 130, 246, 0.25)' : 'transparent',
-                color: activeDeviceId === 'device-laptop-001' ? '#60a5fa' : 'var(--text-muted)',
+                background: activeDeviceId === 'device-laptop-001' ? 'rgba(37, 99, 235, 0.12)' : 'transparent',
+                color: activeDeviceId === 'device-laptop-001' ? '#2563eb' : 'var(--text-secondary)',
                 cursor: 'pointer',
                 fontWeight: 600
               }}
@@ -243,11 +247,11 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 gap: '5px',
-                padding: '4px 8px',
+                padding: '4px 9px',
                 borderRadius: 'var(--radius-sm)',
                 border: 'none',
-                background: activeDeviceId === 'device-mobile-002' ? 'rgba(139, 92, 246, 0.25)' : 'transparent',
-                color: activeDeviceId === 'device-mobile-002' ? '#c084fc' : 'var(--text-muted)',
+                background: activeDeviceId === 'device-mobile-002' ? 'rgba(124, 58, 237, 0.12)' : 'transparent',
+                color: activeDeviceId === 'device-mobile-002' ? '#7c3aed' : 'var(--text-secondary)',
                 cursor: 'pointer',
                 fontWeight: 600
               }}
@@ -258,13 +262,13 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
             </button>
           </div>
 
-          {/* Version History Button */}
+          {/* History Button */}
           <button
             className="btn btn-secondary btn-sm"
             onClick={onOpenHistory}
             style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
           >
-            <History size={14} />
+            <History size={14} color="#2563eb" />
             <span>History (V{doc.current_version || 1} · {versionCount} revs)</span>
           </button>
 
@@ -272,7 +276,7 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
           <button
             className="btn btn-outline btn-sm"
             onClick={onOpenSyncLab}
-            style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#c084fc', borderColor: 'rgba(139, 92, 246, 0.4)' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#7c3aed', borderColor: 'rgba(124, 58, 237, 0.3)' }}
           >
             <Cpu size={14} />
             <span>Sync Lab</span>
@@ -289,12 +293,12 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
             <span>Save Locally</span>
           </button>
 
-          {/* Save & Sync */}
+          {/* Save & Sync (Primary CTA) */}
           <button
             className="btn btn-primary btn-sm"
             onClick={handleSaveAndSync}
             disabled={isSaving || !hasUnsavedChanges}
-            style={{ minWidth: '110px' }}
+            style={{ minWidth: '115px' }}
           >
             {isSaving ? <RefreshCw size={14} className="animate-spin" /> : <Save size={14} />}
             <span>{isSaving ? 'Syncing...' : 'Save & Sync'}</span>
@@ -312,15 +316,16 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
         flexDirection: 'column',
         gap: '20px'
       }}>
-        {/* Title & Status Form Grid */}
+        {/* Title, Status & Description Form Card */}
         <div style={{
           display: 'grid',
           gridTemplateColumns: '2fr 1fr',
           gap: '16px',
-          background: 'var(--bg-surface)',
+          background: '#ffffff',
           padding: '20px',
           borderRadius: 'var(--radius-lg)',
-          border: '1px solid var(--border-subtle)'
+          border: '1px solid var(--border-subtle)',
+          boxShadow: 'var(--shadow-sm)'
         }}>
           <div>
             <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
@@ -332,7 +337,7 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g. SyncSafe Architectural Blueprint"
-              style={{ fontSize: '1rem', fontWeight: 600 }}
+              style={{ fontSize: '0.98rem', fontWeight: 600 }}
             />
           </div>
 
@@ -344,7 +349,7 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
               className="form-select"
               value={status}
               onChange={(e) => setStatus(e.target.value as any)}
-              style={{ fontSize: '0.9rem', fontWeight: 500 }}
+              style={{ fontSize: '0.88rem', fontWeight: 500 }}
             >
               <option value="draft">draft</option>
               <option value="in_review">in_review</option>
@@ -368,24 +373,25 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
           </div>
         </div>
 
-        {/* Content Markdown Editor */}
+        {/* Content Markdown Editor Card */}
         <div style={{
-          background: 'var(--bg-surface)',
+          background: '#ffffff',
           borderRadius: 'var(--radius-lg)',
           border: '1px solid var(--border-subtle)',
+          boxShadow: 'var(--shadow-sm)',
           overflow: 'hidden'
         }}>
           {/* Content Header */}
           <div style={{
             padding: '12px 20px',
-            background: 'var(--bg-surface-elevated)',
+            background: 'rgba(248, 250, 252, 0.95)',
             borderBottom: '1px solid var(--border-subtle)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+              <span style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-primary)' }}>
                 Markdown Content
               </span>
               <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
@@ -397,7 +403,7 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
               <button
                 className="btn btn-outline btn-sm"
                 onClick={() => setIsPreviewMode(!isPreviewMode)}
-                style={{ padding: '3px 8px', fontSize: '0.75rem' }}
+                style={{ padding: '4px 10px', fontSize: '0.75rem' }}
               >
                 {isPreviewMode ? <Edit3 size={13} /> : <Eye size={13} />}
                 <span>{isPreviewMode ? 'Raw Editor' : 'Preview'}</span>
@@ -414,7 +420,7 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
               lineHeight: 1.7,
               whiteSpace: 'pre-wrap',
               fontFamily: 'var(--font-sans)',
-              fontSize: '0.9rem'
+              fontSize: '0.92rem'
             }}>
               {content || <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>No content provided.</span>}
             </div>
@@ -428,10 +434,13 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
                 width: '100%',
                 minHeight: '340px',
                 border: 'none',
-                background: 'rgba(10, 15, 29, 0.7)',
+                background: '#ffffff',
+                color: 'var(--text-primary)',
                 padding: '20px',
                 fontSize: '0.875rem',
-                lineHeight: 1.6
+                lineHeight: 1.65,
+                outline: 'none',
+                fontFamily: 'var(--font-mono)'
               }}
             />
           )}
@@ -447,10 +456,10 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
           padding: '4px 8px'
         }}>
           <div>
-            Synchronizing via <strong>{activeCoordinator.deviceName}</strong> ({activeCoordinator.deviceId})
+            Synchronizing via <strong style={{ color: 'var(--text-secondary)' }}>{activeCoordinator.deviceName}</strong> ({activeCoordinator.deviceId})
           </div>
           <div>
-            Base Version: <strong>V{doc.current_version || 1}</strong> · Durable SQLite Storage
+            Base Version: <strong style={{ color: 'var(--text-secondary)' }}>V{doc.current_version || 1}</strong> · Durable SQLite Storage
           </div>
         </div>
       </div>
