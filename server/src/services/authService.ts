@@ -27,6 +27,16 @@ export class AuthService {
     return { user, token };
   }
 
+  static ensureUser(email: string, password: string, name: string): { user: User; token: string } {
+    const db = getDatabase();
+    const existing = db.prepare('SELECT id, email, name, created_at FROM users WHERE email = ?').get(email.toLowerCase()) as User | undefined;
+    if (existing) {
+      const token = jwt.sign({ userId: existing.id, email: existing.email }, JWT_SECRET, { expiresIn: '7d' });
+      return { user: existing, token };
+    }
+    return this.register(email, password, name);
+  }
+
   static login(email: string, password: string): { user: User; token: string } {
     const db = getDatabase();
     const userRow = db.prepare(`

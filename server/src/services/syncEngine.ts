@@ -465,18 +465,17 @@ export class SyncEngine {
    */
   static resetDemoData(): { user: any; token: string; document: DocumentRecord; device1: any; device2: any } {
     const db = getDatabase();
+    // Reset demo document state and history while preserving user account
     db.exec(`
       DELETE FROM conflicts;
       DELETE FROM changes;
       DELETE FROM versions;
       DELETE FROM documents;
-      DELETE FROM devices;
-      DELETE FROM users;
     `);
 
-    // Create primary demo user
+    // Ensure demo user exists (preserving existing ID and account)
     const { AuthService } = require('./authService');
-    const { user, token } = AuthService.register('demo@syncsafe.io', 'demo1234', 'Alex Rivera');
+    const { user, token } = AuthService.ensureUser('demo@syncsafe.io', 'demo1234', 'Alex Rivera');
 
     // Register two demo devices
     const device1 = AuthService.registerDevice(user.id, 'device-laptop-001', 'MacBook Pro 16"', 'web-laptop');

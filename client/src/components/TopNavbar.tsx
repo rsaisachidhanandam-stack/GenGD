@@ -11,7 +11,8 @@ import {
   Cpu,
   RotateCcw,
   BookOpen,
-  ChevronDown
+  ChevronDown,
+  LogOut
 } from 'lucide-react';
 import { type SyncStatusState } from '../services/clientSyncCoordinator';
 
@@ -27,6 +28,7 @@ interface TopNavbarProps {
   onResetDemo: () => void;
   isResetting: boolean;
   onOpenDemoScript: () => void;
+  onSignOut?: () => void;
 }
 
 export const TopNavbar: React.FC<TopNavbarProps> = ({
@@ -40,7 +42,8 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
   onOpenSyncLab,
   onResetDemo,
   isResetting,
-  onOpenDemoScript
+  onOpenDemoScript,
+  onSignOut
 }) => {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -423,6 +426,19 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
                   <RotateCcw size={13} />
                   <span>{isResetting ? 'Resetting...' : 'Reset Demo to V1'}</span>
                 </button>
+                {onSignOut && (
+                  <button
+                    className="btn btn-outline btn-sm"
+                    style={{ width: '100%', justifyContent: 'flex-start', color: 'var(--text-muted)' }}
+                    onClick={() => {
+                      setShowProfileMenu(false);
+                      onSignOut();
+                    }}
+                  >
+                    <LogOut size={13} />
+                    <span>Sign Out</span>
+                  </button>
+                )}
               </div>
             </div>
           )}

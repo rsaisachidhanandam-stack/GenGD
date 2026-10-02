@@ -8,6 +8,7 @@ import { ConflictsView } from './components/ConflictsView';
 import { SyncLabView } from './components/SyncLabView';
 import { SettingsView } from './components/SettingsView';
 import { NewDocumentModal } from './components/NewDocumentModal';
+import { AuthModal } from './components/AuthModal';
 
 import { ConflictResolverModal } from './components/ConflictResolverModal';
 import { VersionHistoryModal } from './components/VersionHistoryModal';
@@ -21,9 +22,11 @@ import { AlertTriangle, CheckCircle2, Trash2, Star } from 'lucide-react';
 const API_BASE_URL = 'http://localhost:5000';
 
 export function App() {
-  const [token, setToken] = useState<string | null>(null);
+  const [token, setToken] = useState<string | null>(() => localStorage.getItem('syncsafe_token'));
   const [user, setUser] = useState<{ id: string; name: string; email: string } | null>(null);
   const [serverOnline, setServerOnline] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authErrorMessage, setAuthErrorMessage] = useState<string | null>(null);
 
   // Application Navigation
   const [activeTab, setActiveTab] = useState<'drive' | 'recent' | 'starred' | 'conflicts' | 'trash' | 'settings' | 'sync-lab' | 'document'>('drive');
@@ -73,6 +76,35 @@ export function App() {
     setTimeout(() => setNotification(null), 4000);
   };
 
+  // Central stale/invalid token handler
+  const handleAuthExpiry = useCallback((message: string = 'Your session has expired. Please sign in again.') => {
+    localStorage.removeItem('syncsafe_token');
+    setToken(null);
+    setUser(null);
+    setAuthErrorMessage(message);
+    setShowAuthModal(true);
+    notify('error', message);
+  }, []);
+
+  const handleLoginSuccess = async (newToken: string, newUser: any) => {
+    localStorage.setItem('syncsafe_token', newToken);
+    setToken(newToken);
+    setUser(newUser);
+    setShowAuthModal(false);
+    setAuthErrorMessage(null);
+    notify('success', `Signed in as ${newUser.name}`);
+    await refreshDocumentData(undefined, newToken);
+  };
+
+  const handleSignOut = () => {
+    localStorage.removeItem('syncsafe_token');
+    setToken(null);
+    setUser(null);
+    setShowAuthModal(true);
+    setAuthErrorMessage(null);
+    notify('info', 'Signed out successfully.');
+  };
+
   // Subscribe coordinators to update global sync status
   useEffect(() => {
     const unsubLaptop = laptopCoordinator.subscribeStatus((state) => {
@@ -106,20 +138,26 @@ export function App() {
       const res = await fetch(`${API_BASE_URL}/api/documents`, {
         headers: { Authorization: `Bearer ${currentToken}` }
       });
+      if (res.status === 401) {
+        handleAuthExpiry('Your session has expired. Please sign in again.');
+        return;
+      }
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data.documents)) {
           setDocuments(data.documents);
-          // If no selected document, select first
           if (!selectedDocId && data.documents.length > 0) {
             setSelectedDocId(data.documents[0].id);
+          }
+          if (!activeDocument && data.documents.length > 0) {
+            setActiveDocument(data.documents[0]);
           }
         }
       }
     } catch (err) {
       console.error('Failed to fetch documents list:', err);
     }
-  }, [token, selectedDocId]);
+  }, [token, selectedDocId, activeDocument, handleAuthExpiry]);
 
   // Refresh active document, versions, and conflicts
   const refreshDocumentData = useCallback(async (docId?: string, authToken?: string) => {
@@ -133,6 +171,10 @@ export function App() {
         const docRes = await fetch(`${API_BASE_URL}/api/documents/${currentDocId}`, {
           headers: { Authorization: `Bearer ${currentToken}` }
         });
+        if (docRes.status === 401) {
+          handleAuthExpiry('Your session has expired. Please sign in again.');
+          return;
+        }
         if (docRes.ok) {
           const data = await docRes.json();
           setActiveDocument(data.document);
@@ -146,6 +188,10 @@ export function App() {
         const verRes = await fetch(`${API_BASE_URL}/api/documents/${currentDocId}/versions`, {
           headers: { Authorization: `Bearer ${currentToken}` }
         });
+        if (verRes.status === 401) {
+          handleAuthExpiry('Your session has expired. Please sign in again.');
+          return;
+        }
         if (verRes.ok) {
           const vData = await verRes.json();
           setVersions(vData.versions);
@@ -155,6 +201,10 @@ export function App() {
         const confRes = await fetch(`${API_BASE_URL}/api/documents/${currentDocId}/conflicts`, {
           headers: { Authorization: `Bearer ${currentToken}` }
         });
+        if (confRes.status === 401) {
+          handleAuthExpiry('Your session has expired. Please sign in again.');
+          return;
+        }
         if (confRes.ok) {
           const cData = await confRes.json();
           setConflicts(cData.conflicts);
@@ -169,7 +219,7 @@ export function App() {
     } catch (err) {
       console.error('Failed to refresh document data:', err);
     }
-  }, [activeDocument?.id, token, fetchDocumentsList]);
+  }, [activeDocument?.id, token, fetchDocumentsList, handleAuthExpiry]);
 
   // Poll backend health & seed initial demo data if needed
   const initApp = useCallback(async () => {
@@ -181,25 +231,66 @@ export function App() {
       }
       setServerOnline(true);
 
-      // Check or reset demo environment
-      const resetRes = await fetch(`${API_BASE_URL}/api/demo/reset`, { method: 'POST' });
-      const resetData = await resetRes.json();
+      // 1. Check existing saved token in localStorage
+      const savedToken = localStorage.getItem('syncsafe_token');
+      if (savedToken) {
+        const meRes = await fetch(`${API_BASE_URL}/api/auth/me`, {
+          headers: { Authorization: `Bearer ${savedToken}` }
+        }).catch(() => null);
 
-      setToken(resetData.seed.token);
-      setUser(resetData.seed.user);
-      setActiveDocument(resetData.seed.document);
-      setSelectedDocId(resetData.seed.document.id);
+        if (meRes && meRes.ok) {
+          const meData = await meRes.json();
+          setToken(savedToken);
+          setUser(meData.user);
+          setShowAuthModal(false);
+          await refreshDocumentData(undefined, savedToken);
+          return;
+        } else if (meRes && meRes.status === 401) {
+          handleAuthExpiry('Your session has expired. Please sign in again.');
+          return;
+        }
+      }
 
-      // Save initial document in both local device caches
-      await laptopCoordinator.storage.saveDocument(resetData.seed.document);
-      await mobileCoordinator.storage.saveDocument(resetData.seed.document);
+      // 2. Try auto-logging in demo user
+      const loginRes = await fetch(`${API_BASE_URL}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: 'demo@syncsafe.io', password: 'demo1234' })
+      }).catch(() => null);
 
-      // Refresh document list and lineage
-      await refreshDocumentData(resetData.seed.document.id, resetData.seed.token);
+      if (loginRes && loginRes.ok) {
+        const lData = await loginRes.json();
+        localStorage.setItem('syncsafe_token', lData.token);
+        setToken(lData.token);
+        setUser(lData.user);
+        setShowAuthModal(false);
+        await refreshDocumentData(undefined, lData.token);
+        return;
+      }
+
+      // 3. If login failed because database is completely empty, call demo reset to seed
+      const resetRes = await fetch(`${API_BASE_URL}/api/demo/reset`, { method: 'POST' }).catch(() => null);
+      if (resetRes && resetRes.ok) {
+        const rData = await resetRes.json();
+        localStorage.setItem('syncsafe_token', rData.seed.token);
+        setToken(rData.seed.token);
+        setUser(rData.seed.user);
+        setActiveDocument(rData.seed.document);
+        setSelectedDocId(rData.seed.document.id);
+        setShowAuthModal(false);
+
+        await laptopCoordinator.storage.saveDocument(rData.seed.document);
+        await mobileCoordinator.storage.saveDocument(rData.seed.document);
+        await refreshDocumentData(rData.seed.document.id, rData.seed.token);
+        return;
+      }
+
+      setShowAuthModal(true);
     } catch (err: any) {
       console.error('Initialization error:', err);
+      setShowAuthModal(true);
     }
-  }, [laptopCoordinator, mobileCoordinator, refreshDocumentData]);
+  }, [laptopCoordinator, mobileCoordinator, refreshDocumentData, handleAuthExpiry]);
 
   useEffect(() => {
     initApp();
@@ -221,6 +312,7 @@ export function App() {
     try {
       const res = await fetch(`${API_BASE_URL}/api/demo/reset`, { method: 'POST' });
       const data = await res.json();
+      localStorage.setItem('syncsafe_token', data.seed.token);
       setToken(data.seed.token);
       setUser(data.seed.user);
       setActiveDocument(data.seed.document);
@@ -253,7 +345,10 @@ export function App() {
 
   // Handle Create Real Document
   const handleCreateDocument = async (name: string, title: string, status: any, description: string, content: string) => {
-    if (!token) throw new Error('Not authenticated');
+    if (!token) {
+      handleAuthExpiry('Please sign in to create a document.');
+      throw new Error('Not authenticated');
+    }
 
     const res = await fetch(`${API_BASE_URL}/api/documents`, {
       method: 'POST',
@@ -267,6 +362,11 @@ export function App() {
         fields: { title, status, description, content }
       })
     });
+
+    if (res.status === 401) {
+      handleAuthExpiry('Your session has expired. Please sign in again.');
+      throw new Error('User associated with token no longer exists. Please sign in again.');
+    }
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
@@ -306,6 +406,11 @@ export function App() {
           resolvedFields
         })
       });
+
+      if (res.status === 401) {
+        handleAuthExpiry('Your session has expired. Please sign in again.');
+        throw new Error('User associated with token no longer exists. Please sign in again.');
+      }
 
       if (!res.ok) {
         const err = await res.json();
@@ -478,6 +583,7 @@ export function App() {
         onResetDemo={handleResetDemo}
         isResetting={isResetting}
         onOpenDemoScript={() => setShowDemoScript(true)}
+        onSignOut={handleSignOut}
       />
 
       {/* Floating Notification */}
@@ -732,6 +838,14 @@ export function App() {
           currentVersion={activeDocument?.current_version || 1}
         />
       )}
+
+      {/* Authentication Modal */}
+      <AuthModal
+        isOpen={showAuthModal || !token || !user}
+        onLoginSuccess={handleLoginSuccess}
+        initialError={authErrorMessage}
+        apiBaseUrl={API_BASE_URL}
+      />
     </div>
   );
 }

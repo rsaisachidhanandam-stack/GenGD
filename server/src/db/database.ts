@@ -32,6 +32,19 @@ export function getDatabase(dbPath?: string): Database.Database {
 
   initSchema(db);
 
+  if (targetPath !== ':memory:') {
+    const existing = db.prepare('SELECT id FROM users WHERE email = ?').get('demo@syncsafe.io');
+    if (!existing) {
+      const bcrypt = require('bcryptjs');
+      const hash = bcrypt.hashSync('demo1234', 10);
+      const userId = '00000000-0000-4000-a000-000000000001';
+      db.prepare(`
+        INSERT OR IGNORE INTO users (id, email, password_hash, name)
+        VALUES (?, ?, ?, ?)
+      `).run(userId, 'demo@syncsafe.io', hash, 'Alex Rivera');
+    }
+  }
+
   dbInstance = db;
   return db;
 }
