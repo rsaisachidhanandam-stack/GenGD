@@ -25,7 +25,7 @@ const API_BASE_URL = 'http://localhost:5000';
 export function App() {
   const [token, setToken] = useState<string | null>(() => localStorage.getItem('syncsafe_token'));
   const [user, setUser] = useState<{ id: string; name: string; email: string } | null>(null);
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(() => Boolean(localStorage.getItem('syncsafe_token')));
   const [serverOnline, setServerOnline] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authErrorMessage, setAuthErrorMessage] = useState<string | null>(null);
@@ -93,6 +93,7 @@ export function App() {
     localStorage.setItem('syncsafe_token', newToken);
     setToken(newToken);
     setUser(newUser);
+    setIsCheckingAuth(false);
     setShowAuthModal(false);
     setAuthErrorMessage(null);
     notify('success', `Signed in as ${newUser.name}`);
@@ -103,6 +104,7 @@ export function App() {
     localStorage.removeItem('syncsafe_token');
     setToken(null);
     setUser(null);
+    setIsCheckingAuth(false);
     setActiveDocument(null);
     setSelectedDocId(null);
     setDocuments([]);
@@ -232,36 +234,42 @@ export function App() {
 
   // Verify existing saved session or initialize unauthenticated state
   const initApp = useCallback(async () => {
+    const savedToken = localStorage.getItem('syncsafe_token');
+    if (!savedToken) {
+      setToken(null);
+      setUser(null);
+      setIsCheckingAuth(false);
+      // Background ping for connectivity indicator
+      fetch(`${API_BASE_URL}/health`)
+        .then((r) => setServerOnline(r.ok))
+        .catch(() => setServerOnline(false));
+      return;
+    }
+
     setIsCheckingAuth(true);
     try {
-      const healthRes = await fetch(`${API_BASE_URL}/health`).catch(() => null);
-      if (!healthRes || !healthRes.ok) {
-        setServerOnline(false);
-      } else {
+      // Validate saved token with server
+      const meRes = await fetch(`${API_BASE_URL}/api/auth/me`, {
+        headers: { Authorization: `Bearer ${savedToken}` }
+      }).catch(() => null);
+
+      if (meRes && meRes.ok) {
+        const meData = await meRes.json();
         setServerOnline(true);
+        setToken(savedToken);
+        setUser(meData.user);
+        setShowAuthModal(false);
+        // Preload documents so My Drive is immediately populated when rendered
+        await refreshDocumentData(undefined, savedToken).catch(console.error);
+        return;
+      } else if (meRes && meRes.status === 401) {
+        handleAuthExpiry('Your session has expired. Please sign in again.');
+        return;
+      } else {
+        // Network or server unreachable
+        setServerOnline(false);
       }
 
-      // Check existing saved token in localStorage
-      const savedToken = localStorage.getItem('syncsafe_token');
-      if (savedToken) {
-        const meRes = await fetch(`${API_BASE_URL}/api/auth/me`, {
-          headers: { Authorization: `Bearer ${savedToken}` }
-        }).catch(() => null);
-
-        if (meRes && meRes.ok) {
-          const meData = await meRes.json();
-          setToken(savedToken);
-          setUser(meData.user);
-          setShowAuthModal(false);
-          await refreshDocumentData(undefined, savedToken);
-          return;
-        } else if (meRes && meRes.status === 401) {
-          handleAuthExpiry('Your session has expired. Please sign in again.');
-          return;
-        }
-      }
-
-      // If no valid saved token exists, keep unauthenticated so user sees the login screen
       setToken(null);
       setUser(null);
     } catch (err: any) {
