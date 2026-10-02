@@ -1,13 +1,22 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Header } from './components/Header';
-import { DeviceSimulator } from './components/DeviceSimulator';
+import { TopNavbar } from './components/TopNavbar';
+import { Sidebar } from './components/Sidebar';
+import { DriveView } from './components/DriveView';
+import { FileDetailsPanel } from './components/FileDetailsPanel';
+import { DocumentWorkspace } from './components/DocumentWorkspace';
+import { ConflictsView } from './components/ConflictsView';
+import { SyncLabView } from './components/SyncLabView';
+import { SettingsView } from './components/SettingsView';
+import { NewDocumentModal } from './components/NewDocumentModal';
+
 import { ConflictResolverModal } from './components/ConflictResolverModal';
 import { VersionHistoryModal } from './components/VersionHistoryModal';
 import { PendingQueueModal } from './components/PendingQueueModal';
 import { DemoScriptWalkthrough } from './components/DemoScriptWalkthrough';
-import { ClientSyncCoordinator } from './services/clientSyncCoordinator';
+
+import { ClientSyncCoordinator, type SyncStatusState } from './services/clientSyncCoordinator';
 import { type CachedDocument, type PendingQueueItem } from './services/indexedDbStorage';
-import { AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Trash2, Star } from 'lucide-react';
 
 const API_BASE_URL = 'http://localhost:5000';
 
@@ -15,13 +24,25 @@ export function App() {
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<{ id: string; name: string; email: string } | null>(null);
   const [serverOnline, setServerOnline] = useState(false);
+
+  // Application Navigation
+  const [activeTab, setActiveTab] = useState<'drive' | 'recent' | 'starred' | 'conflicts' | 'trash' | 'settings' | 'sync-lab' | 'document'>('drive');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Documents & Selection
+  const [documents, setDocuments] = useState<CachedDocument[]>([]);
   const [activeDocument, setActiveDocument] = useState<CachedDocument | null>(null);
+  const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
+  const [showDetailsPanel, setShowDetailsPanel] = useState(true);
+
+  // Lineage & Conflicts Data
   const [versions, setVersions] = useState<any[]>([]);
   const [conflicts, setConflicts] = useState<any[]>([]);
 
-  const [viewMode, setViewMode] = useState<'dual' | 'laptop' | 'mobile'>('dual');
+  // State Flags
   const [isResetting, setIsResetting] = useState(false);
   const [resolvingConflict, setResolvingConflict] = useState(false);
+  const [showNewDocModal, setShowNewDocModal] = useState(false);
 
   // Active Modals
   const [activeConflict, setActiveConflict] = useState<any | null>(null);
@@ -29,6 +50,14 @@ export function App() {
   const [showQueueModalDevice, setShowQueueModalDevice] = useState<string | null>(null);
   const [showDemoScript, setShowDemoScript] = useState(false);
   const [notification, setNotification] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null);
+
+  // Global Sync Status State
+  const [globalSyncState, setGlobalSyncState] = useState<SyncStatusState>({
+    status: 'synced',
+    message: 'Synced with server',
+    pendingCount: 0,
+    lastSyncedVersion: 1
+  });
 
   // Coordinators for Laptop and Mobile with isolated storage
   const laptopCoordinator = useMemo(() => {
@@ -43,6 +72,104 @@ export function App() {
     setNotification({ type, text });
     setTimeout(() => setNotification(null), 4000);
   };
+
+  // Subscribe coordinators to update global sync status
+  useEffect(() => {
+    const unsubLaptop = laptopCoordinator.subscribeStatus((state) => {
+      setGlobalSyncState((prev) => {
+        if (state.status === 'conflict') return state;
+        if (prev.status === 'conflict') return prev;
+        return state;
+      });
+    });
+
+    const unsubMobile = mobileCoordinator.subscribeStatus((state) => {
+      setGlobalSyncState((prev) => {
+        if (state.status === 'conflict') return state;
+        if (prev.status === 'conflict') return prev;
+        return state;
+      });
+    });
+
+    return () => {
+      unsubLaptop();
+      unsubMobile();
+    };
+  }, [laptopCoordinator, mobileCoordinator]);
+
+  // Fetch document list from backend
+  const fetchDocumentsList = useCallback(async (authToken?: string) => {
+    const currentToken = authToken || token;
+    if (!currentToken) return;
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/documents`, {
+        headers: { Authorization: `Bearer ${currentToken}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.documents)) {
+          setDocuments(data.documents);
+          // If no selected document, select first
+          if (!selectedDocId && data.documents.length > 0) {
+            setSelectedDocId(data.documents[0].id);
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Failed to fetch documents list:', err);
+    }
+  }, [token, selectedDocId]);
+
+  // Refresh active document, versions, and conflicts
+  const refreshDocumentData = useCallback(async (docId?: string, authToken?: string) => {
+    const currentDocId = docId || activeDocument?.id;
+    const currentToken = authToken || token;
+    if (!currentToken) return;
+
+    try {
+      // 1. Fetch latest doc if docId present
+      if (currentDocId) {
+        const docRes = await fetch(`${API_BASE_URL}/api/documents/${currentDocId}`, {
+          headers: { Authorization: `Bearer ${currentToken}` }
+        });
+        if (docRes.ok) {
+          const data = await docRes.json();
+          setActiveDocument(data.document);
+          setGlobalSyncState(prev => ({
+            ...prev,
+            lastSyncedVersion: data.document.current_version
+          }));
+        }
+
+        // 2. Fetch versions
+        const verRes = await fetch(`${API_BASE_URL}/api/documents/${currentDocId}/versions`, {
+          headers: { Authorization: `Bearer ${currentToken}` }
+        });
+        if (verRes.ok) {
+          const vData = await verRes.json();
+          setVersions(vData.versions);
+        }
+
+        // 3. Fetch conflicts
+        const confRes = await fetch(`${API_BASE_URL}/api/documents/${currentDocId}/conflicts`, {
+          headers: { Authorization: `Bearer ${currentToken}` }
+        });
+        if (confRes.ok) {
+          const cData = await confRes.json();
+          setConflicts(cData.conflicts);
+          if (cData.conflicts.length > 0) {
+            setGlobalSyncState(prev => ({ ...prev, status: 'conflict', message: 'Conflict detected' }));
+          }
+        }
+      }
+
+      // Refresh documents list
+      await fetchDocumentsList(currentToken);
+    } catch (err) {
+      console.error('Failed to refresh document data:', err);
+    }
+  }, [activeDocument?.id, token, fetchDocumentsList]);
 
   // Poll backend health & seed initial demo data if needed
   const initApp = useCallback(async () => {
@@ -61,72 +188,34 @@ export function App() {
       setToken(resetData.seed.token);
       setUser(resetData.seed.user);
       setActiveDocument(resetData.seed.document);
+      setSelectedDocId(resetData.seed.document.id);
 
       // Save initial document in both local device caches
       await laptopCoordinator.storage.saveDocument(resetData.seed.document);
       await mobileCoordinator.storage.saveDocument(resetData.seed.document);
 
-      // Fetch versions
+      // Refresh document list and lineage
       await refreshDocumentData(resetData.seed.document.id, resetData.seed.token);
     } catch (err: any) {
       console.error('Initialization error:', err);
     }
-  }, [laptopCoordinator, mobileCoordinator]);
+  }, [laptopCoordinator, mobileCoordinator, refreshDocumentData]);
 
   useEffect(() => {
     initApp();
   }, [initApp]);
 
-  const refreshDocumentData = async (docId?: string, authToken?: string) => {
-    const currentDocId = docId || activeDocument?.id;
-    const currentToken = authToken || token;
-    if (!currentDocId || !currentToken) return;
-
-    try {
-      // 1. Fetch latest doc
-      const docRes = await fetch(`${API_BASE_URL}/api/documents/${currentDocId}`, {
-        headers: { Authorization: `Bearer ${currentToken}` }
-      });
-      if (docRes.ok) {
-        const data = await docRes.json();
-        setActiveDocument(data.document);
-      }
-
-      // 2. Fetch versions
-      const verRes = await fetch(`${API_BASE_URL}/api/documents/${currentDocId}/versions`, {
-        headers: { Authorization: `Bearer ${currentToken}` }
-      });
-      if (verRes.ok) {
-        const vData = await verRes.json();
-        setVersions(vData.versions);
-      }
-
-      // 3. Fetch conflicts
-      const confRes = await fetch(`${API_BASE_URL}/api/documents/${currentDocId}/conflicts`, {
-        headers: { Authorization: `Bearer ${currentToken}` }
-      });
-      if (confRes.ok) {
-        const cData = await confRes.json();
-        setConflicts(cData.conflicts);
-        if (cData.conflicts.length > 0 && !activeConflict) {
-          // Keep conflict available for review
-        }
-      }
-    } catch (err) {
-      console.error('Failed to refresh document data:', err);
-    }
-  };
-
-  // Periodic sync check when online
+  // Periodic sync polling check
   useEffect(() => {
     const interval = setInterval(() => {
-      if (activeDocument && token) {
+      if (token) {
         refreshDocumentData();
       }
     }, 3000);
     return () => clearInterval(interval);
-  }, [activeDocument?.id, token]);
+  }, [token, refreshDocumentData]);
 
+  // Handle Reset Demo
   const handleResetDemo = async () => {
     setIsResetting(true);
     try {
@@ -135,6 +224,7 @@ export function App() {
       setToken(data.seed.token);
       setUser(data.seed.user);
       setActiveDocument(data.seed.document);
+      setSelectedDocId(data.seed.document.id);
 
       // Clear both local device caches and save V1 document
       await laptopCoordinator.storage.clearAll();
@@ -145,6 +235,13 @@ export function App() {
       laptopCoordinator.setOnlineStatus(true);
       mobileCoordinator.setOnlineStatus(true);
 
+      setGlobalSyncState({
+        status: 'synced',
+        message: 'Synced with server',
+        pendingCount: 0,
+        lastSyncedVersion: 1
+      });
+
       await refreshDocumentData(data.seed.document.id, data.seed.token);
       notify('success', 'Demo reset: Document initialized at Version 1 across all devices');
     } catch (err: any) {
@@ -154,6 +251,45 @@ export function App() {
     }
   };
 
+  // Handle Create Real Document
+  const handleCreateDocument = async (name: string, title: string, status: any, description: string, content: string) => {
+    if (!token) throw new Error('Not authenticated');
+
+    const res = await fetch(`${API_BASE_URL}/api/documents`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        name,
+        deviceId: 'device-laptop-001',
+        fields: { title, status, description, content }
+      })
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to create document');
+    }
+
+    const data = await res.json();
+    const createdDoc = data.document;
+
+    // Cache locally
+    await laptopCoordinator.storage.saveDocument(createdDoc);
+    await mobileCoordinator.storage.saveDocument(createdDoc);
+
+    // Refresh list and activate new document
+    await fetchDocumentsList();
+    setActiveDocument(createdDoc);
+    setSelectedDocId(createdDoc.id);
+    setActiveTab('document');
+
+    notify('success', `Created "${createdDoc.name}" with Version 1 lineage.`);
+  };
+
+  // Handle Conflict Resolution
   const handleResolveConflict = async (resolvedFields: any) => {
     if (!activeConflict || !activeDocument || !token) return;
     setResolvingConflict(true);
@@ -322,14 +458,23 @@ export function App() {
     }
   }, [showQueueModalDevice, currentQueueDeviceCoordinator]);
 
+  // Selected document object for FileDetailsPanel
+  const selectedDocument = useMemo(() => {
+    return documents.find(d => d.id === selectedDocId) || activeDocument;
+  }, [documents, selectedDocId, activeDocument]);
+
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      {/* App Header */}
-      <Header
+    <div className="app-shell">
+      {/* Top Navigation */}
+      <TopNavbar
         user={user}
         serverOnline={serverOnline}
-        viewMode={viewMode}
-        setViewMode={setViewMode}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        globalSyncState={globalSyncState}
+        conflictCount={conflicts.length}
+        onNavigateTab={(tab) => setActiveTab(tab as any)}
+        onOpenSyncLab={() => setActiveTab('sync-lab')}
         onResetDemo={handleResetDemo}
         isResetting={isResetting}
         onOpenDemoScript={() => setShowDemoScript(true)}
@@ -339,7 +484,7 @@ export function App() {
       {notification && (
         <div style={{
           position: 'fixed',
-          top: '70px',
+          top: '76px',
           right: '24px',
           zIndex: 1100,
           padding: '12px 18px',
@@ -359,48 +504,186 @@ export function App() {
         </div>
       )}
 
-      {/* Main Dual Device Viewport */}
-      <main style={{
-        flex: 1,
-        padding: '20px 24px',
-        display: 'grid',
-        gridTemplateColumns:
-          viewMode === 'dual' ? '1fr 1fr' : '1fr',
-        gap: '20px',
-        maxWidth: viewMode === 'dual' ? '1600px' : '900px',
-        width: '100%',
-        margin: '0 auto'
-      }}>
-        {/* Laptop Device Simulator */}
-        {(viewMode === 'dual' || viewMode === 'laptop') && (
-          <DeviceSimulator
-            coordinator={laptopCoordinator}
-            deviceType="laptop"
-            initialDocument={activeDocument}
-            onOpenHistory={() => setShowHistoryModal(true)}
-            onOpenQueue={(devId) => setShowQueueModalDevice(devId)}
-            onOpenConflict={() => conflicts.length > 0 && setActiveConflict(conflicts[0])}
-            hasOpenConflict={conflicts.length > 0}
-            versionCount={versions.length}
-          />
-        )}
+      {/* Main Body Shell */}
+      <div className="app-body">
+        {/* Left Sidebar */}
+        <Sidebar
+          activeTab={activeTab}
+          onNavigateTab={(tab) => setActiveTab(tab as any)}
+          conflictCount={conflicts.length}
+          onOpenNewDocument={() => setShowNewDocModal(true)}
+        />
 
-        {/* Mobile Device Simulator */}
-        {(viewMode === 'dual' || viewMode === 'mobile') && (
-          <DeviceSimulator
-            coordinator={mobileCoordinator}
-            deviceType="mobile"
-            initialDocument={activeDocument}
-            onOpenHistory={() => setShowHistoryModal(true)}
-            onOpenQueue={(devId) => setShowQueueModalDevice(devId)}
-            onOpenConflict={() => conflicts.length > 0 && setActiveConflict(conflicts[0])}
-            hasOpenConflict={conflicts.length > 0}
-            versionCount={versions.length}
-          />
-        )}
-      </main>
+        {/* Content Area */}
+        <main className="main-content">
+          {/* View: My Drive */}
+          {activeTab === 'drive' && (
+            <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+              <div style={{ flex: 1, overflowY: 'auto' }}>
+                <DriveView
+                  documents={documents}
+                  selectedDocId={selectedDocId}
+                  onSelectDoc={(doc) => {
+                    setSelectedDocId(doc.id);
+                    setShowDetailsPanel(true);
+                  }}
+                  onOpenDoc={(doc) => {
+                    setActiveDocument(doc);
+                    setSelectedDocId(doc.id);
+                    setActiveTab('document');
+                  }}
+                  onOpenNewDocument={() => setShowNewDocModal(true)}
+                  searchQuery={searchQuery}
+                  versions={versions}
+                  conflicts={conflicts}
+                />
+              </div>
 
-      {/* Conflict Resolver Modal */}
+              {/* Collapsible File Details Panel */}
+              {showDetailsPanel && (
+                <FileDetailsPanel
+                  document={selectedDocument}
+                  onClose={() => setShowDetailsPanel(false)}
+                  onOpenDoc={(doc) => {
+                    setActiveDocument(doc);
+                    setActiveTab('document');
+                  }}
+                  onOpenHistory={() => setShowHistoryModal(true)}
+                  onOpenSyncLab={() => setActiveTab('sync-lab')}
+                  hasConflict={conflicts.some(c => c.document_id === selectedDocument?.id)}
+                  versionCount={versions.length}
+                />
+              )}
+            </div>
+          )}
+
+          {/* View: Recent */}
+          {activeTab === 'recent' && (
+            <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+              <div style={{ flex: 1, overflowY: 'auto' }}>
+                <DriveView
+                  documents={documents}
+                  selectedDocId={selectedDocId}
+                  onSelectDoc={(doc) => {
+                    setSelectedDocId(doc.id);
+                    setShowDetailsPanel(true);
+                  }}
+                  onOpenDoc={(doc) => {
+                    setActiveDocument(doc);
+                    setSelectedDocId(doc.id);
+                    setActiveTab('document');
+                  }}
+                  onOpenNewDocument={() => setShowNewDocModal(true)}
+                  searchQuery={searchQuery}
+                  versions={versions}
+                  conflicts={conflicts}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* View: Starred */}
+          {activeTab === 'starred' && (
+            <div style={{ padding: '60px 20px', textAlign: 'center' }}>
+              <Star size={40} color="#fbbf24" style={{ margin: '0 auto 12px' }} />
+              <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                Starred Documents
+              </h3>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '4px', maxWidth: '360px', margin: '4px auto 16px' }}>
+                Star important documents in My Drive to access them quickly here.
+              </p>
+              <button className="btn btn-outline btn-sm" onClick={() => setActiveTab('drive')}>
+                Go to My Drive
+              </button>
+            </div>
+          )}
+
+          {/* View: Conflicts Page */}
+          {activeTab === 'conflicts' && (
+            <div style={{ flex: 1, overflowY: 'auto' }}>
+              <ConflictsView
+                conflicts={conflicts}
+                documents={documents}
+                onReviewConflict={(conflict) => setActiveConflict(conflict)}
+                onOpenSyncLab={() => setActiveTab('sync-lab')}
+              />
+            </div>
+          )}
+
+          {/* View: Trash */}
+          {activeTab === 'trash' && (
+            <div style={{ padding: '60px 20px', textAlign: 'center' }}>
+              <Trash2 size={40} color="var(--text-muted)" style={{ margin: '0 auto 12px' }} />
+              <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                Trash is Empty
+              </h3>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+                No deleted documents. All files are safely preserved.
+              </p>
+            </div>
+          )}
+
+          {/* View: Document Workspace Editor */}
+          {activeTab === 'document' && activeDocument && (
+            <DocumentWorkspace
+              document={activeDocument}
+              laptopCoordinator={laptopCoordinator}
+              mobileCoordinator={mobileCoordinator}
+              onBackToDrive={() => setActiveTab('drive')}
+              onOpenHistory={() => setShowHistoryModal(true)}
+              onOpenSyncLab={() => setActiveTab('sync-lab')}
+              onDocumentUpdated={(updated) => {
+                setActiveDocument(updated);
+                refreshDocumentData();
+              }}
+              hasConflict={conflicts.some(c => c.document_id === activeDocument.id)}
+              onOpenConflict={() => conflicts.length > 0 && setActiveConflict(conflicts[0])}
+              versionCount={versions.length}
+            />
+          )}
+
+          {/* View: Sync Lab (Dual-Device Simulator for Technical Judges) */}
+          {activeTab === 'sync-lab' && (
+            <SyncLabView
+              laptopCoordinator={laptopCoordinator}
+              mobileCoordinator={mobileCoordinator}
+              activeDocument={activeDocument}
+              onOpenHistory={() => setShowHistoryModal(true)}
+              onOpenQueue={(devId) => setShowQueueModalDevice(devId)}
+              onOpenConflict={() => conflicts.length > 0 && setActiveConflict(conflicts[0])}
+              hasOpenConflict={conflicts.length > 0}
+              versionCount={versions.length}
+              onResetDemo={handleResetDemo}
+              isResetting={isResetting}
+              onOpenDemoScript={() => setShowDemoScript(true)}
+            />
+          )}
+
+          {/* View: Settings */}
+          {activeTab === 'settings' && (
+            <div style={{ flex: 1, overflowY: 'auto' }}>
+              <SettingsView
+                user={user}
+                serverOnline={serverOnline}
+                laptopCoordinator={laptopCoordinator}
+                mobileCoordinator={mobileCoordinator}
+                token={token}
+                onResetDemo={handleResetDemo}
+                isResetting={isResetting}
+              />
+            </div>
+          )}
+        </main>
+      </div>
+
+      {/* New Document Modal */}
+      <NewDocumentModal
+        isOpen={showNewDocModal}
+        onClose={() => setShowNewDocModal(false)}
+        onCreateDocument={handleCreateDocument}
+      />
+
+      {/* Conflict Resolver Modal (Existing & Preserved) */}
       {activeConflict && (
         <ConflictResolverModal
           conflict={activeConflict}
@@ -410,7 +693,7 @@ export function App() {
         />
       )}
 
-      {/* Version History Modal */}
+      {/* Version History Modal (Existing & Preserved) */}
       {showHistoryModal && (
         <VersionHistoryModal
           versions={versions}
@@ -419,7 +702,7 @@ export function App() {
         />
       )}
 
-      {/* Pending Queue Modal */}
+      {/* Pending Queue Modal (Existing & Preserved) */}
       {showQueueModalDevice && (
         <PendingQueueModal
           queue={queueItems}
@@ -441,7 +724,7 @@ export function App() {
         />
       )}
 
-      {/* Guided Demo Walkthrough Modal */}
+      {/* Guided Demo Walkthrough Modal (Existing & Preserved) */}
       {showDemoScript && (
         <DemoScriptWalkthrough
           onClose={() => setShowDemoScript(false)}
