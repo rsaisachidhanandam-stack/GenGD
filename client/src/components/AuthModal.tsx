@@ -6,7 +6,15 @@ import {
   User,
   AlertCircle,
   ArrowRight,
-  Sparkles
+  Sparkles,
+  Laptop,
+  Cloud,
+  Smartphone,
+  HardDrive,
+  RefreshCw,
+  GitMerge,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 
 interface AuthModalProps {
@@ -29,6 +37,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [password, setPassword] = useState('demo1234');
   const [name, setName] = useState('Alex Rivera');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(initialError || null);
 
   React.useEffect(() => {
@@ -100,219 +109,416 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }
   };
 
-  const modalBody = (
-    <div
-      className="modal-content"
-      style={{
-        maxWidth: '440px',
-        width: '100%',
-        padding: '0',
-        boxShadow: '0 20px 50px -10px rgba(15, 23, 42, 0.16), 0 10px 20px -5px rgba(15, 23, 42, 0.08)',
-        border: '1px solid rgba(226, 232, 240, 0.95)',
-        borderRadius: 'var(--radius-xl)',
-        background: 'rgba(255, 255, 255, 0.96)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
-        overflow: 'hidden'
-      }}
-    >
-      {/* Modal Header */}
-      <div style={{
-        padding: '28px 28px 20px',
-        background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.04) 0%, rgba(124, 58, 237, 0.04) 100%)',
-        borderBottom: '1px solid var(--border-subtle)',
-        textAlign: 'center'
-      }}>
+  // Right-hand authentication card
+  const renderAuthCard = () => (
+    <div className="auth-glass-card">
+      {/* Card Header */}
+      <div style={{ marginBottom: '24px' }}>
+        <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#f8fafc', letterSpacing: '-0.02em', marginBottom: '6px' }}>
+          {isRegister ? 'Create an account' : 'Welcome back'}
+        </h2>
+        <p style={{ fontSize: '0.875rem', color: '#94a3b8' }}>
+          {isRegister ? 'Sign up to start synchronizing with zero silent data loss' : 'Sign in to continue to SyncSafe'}
+        </p>
+      </div>
+
+      {/* Error Banner */}
+      {errorMessage && (
         <div style={{
-          width: '52px',
-          height: '52px',
-          borderRadius: '14px',
+          padding: '12px 14px',
+          borderRadius: '10px',
+          background: 'rgba(239, 68, 68, 0.12)',
+          border: '1px solid rgba(239, 68, 68, 0.3)',
+          color: '#f87171',
+          fontSize: '0.84rem',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          marginBottom: '20px'
+        }}>
+          <AlertCircle size={18} style={{ flexShrink: 0 }} />
+          <span>{errorMessage}</span>
+        </div>
+      )}
+
+      {/* Authentication Form */}
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        {isRegister && (
+          <div>
+            <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '6px' }}>
+              Full Name
+            </label>
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+              <User size={16} color="#64748b" style={{ position: 'absolute', left: '12px' }} />
+              <input
+                type="text"
+                className="auth-input-dark"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Alex Rivera"
+                required
+              />
+            </div>
+          </div>
+        )}
+
+        <div>
+          <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '6px' }}>
+            Email Address
+          </label>
+          <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+            <Mail size={16} color="#64748b" style={{ position: 'absolute', left: '12px' }} />
+            <input
+              type="email"
+              className="auth-input-dark"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="demo@syncsafe.io"
+              required
+            />
+          </div>
+        </div>
+
+        <div>
+          <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '6px' }}>
+            Password
+          </label>
+          <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+            <Lock size={16} color="#64748b" style={{ position: 'absolute', left: '12px' }} />
+            <input
+              type={showPassword ? 'text' : 'password'}
+              className="auth-input-dark"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              style={{ paddingRight: '40px' }}
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              style={{
+                position: 'absolute',
+                right: '12px',
+                background: 'transparent',
+                border: 'none',
+                color: '#64748b',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                padding: '4px'
+              }}
+              title={showPassword ? 'Hide password' : 'Show password'}
+            >
+              {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
+          </div>
+        </div>
+
+        {/* Primary Action Button: Sign In / Create Account */}
+        <button
+          type="submit"
+          disabled={loading}
+          style={{
+            width: '100%',
+            padding: '11px',
+            marginTop: '6px',
+            background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+            border: 'none',
+            borderRadius: '10px',
+            color: '#ffffff',
+            fontWeight: 700,
+            fontSize: '0.92rem',
+            cursor: loading ? 'not-allowed' : 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
+            boxShadow: '0 4px 16px rgba(37, 99, 235, 0.4)',
+            transition: 'all 0.2s ease',
+            opacity: loading ? 0.7 : 1
+          }}
+        >
+          <span>{loading ? 'Authenticating...' : isRegister ? 'Create Account' : 'Sign In'}</span>
+          <ArrowRight size={16} />
+        </button>
+      </form>
+
+      {/* Divider: OR */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        margin: '20px 0',
+        color: '#64748b',
+        fontSize: '0.72rem'
+      }}>
+        <div style={{ flex: 1, height: '1px', background: 'rgba(255, 255, 255, 0.08)' }} />
+        <span style={{ padding: '0 12px', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#94a3b8', fontWeight: 700 }}>
+          OR
+        </span>
+        <div style={{ flex: 1, height: '1px', background: 'rgba(255, 255, 255, 0.08)' }} />
+      </div>
+
+      {/* Secondary/Demo Action Button: Continue as Demo */}
+      <button
+        type="button"
+        onClick={handleQuickDemoLogin}
+        disabled={loading}
+        style={{
+          width: '100%',
+          padding: '11px',
+          background: 'rgba(37, 99, 235, 0.1)',
+          border: '1px solid rgba(59, 130, 246, 0.35)',
+          borderRadius: '10px',
+          color: '#93c5fd',
+          fontWeight: 700,
+          fontSize: '0.9rem',
+          cursor: loading ? 'not-allowed' : 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '8px',
+          transition: 'all 0.2s ease'
+        }}
+      >
+        <Sparkles size={16} color="#60a5fa" />
+        <span>Continue as Demo</span>
+      </button>
+
+      {/* Demo helper info */}
+      <p style={{ fontSize: '0.72rem', color: '#64748b', textAlign: 'center', marginTop: '8px' }}>
+        Pre-configured demo with Alex Rivera & dual-device simulation
+      </p>
+
+      {/* Toggle between Sign In and Registration */}
+      <div style={{ textAlign: 'center', marginTop: '22px', paddingTop: '16px', borderTop: '1px solid rgba(255, 255, 255, 0.06)', fontSize: '0.82rem', color: '#94a3b8' }}>
+        {isRegister ? (
+          <span>
+            Already have an account?{' '}
+            <button
+              type="button"
+              onClick={() => setIsRegister(false)}
+              style={{ background: 'transparent', border: 'none', color: '#60a5fa', cursor: 'pointer', fontWeight: 700, marginLeft: '4px' }}
+            >
+              Sign In
+            </button>
+          </span>
+        ) : (
+          <span>
+            Don't have an account?{' '}
+            <button
+              type="button"
+              onClick={() => setIsRegister(true)}
+              style={{ background: 'transparent', border: 'none', color: '#60a5fa', cursor: 'pointer', fontWeight: 700, marginLeft: '4px' }}
+            >
+              Create one
+            </button>
+          </span>
+        )}
+      </div>
+    </div>
+  );
+
+  // Left-hand product introduction
+  const renderProductIntro = () => (
+    <div className="auth-intro-side">
+      {/* Brand & Badge */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+        <div style={{
+          width: '44px',
+          height: '44px',
+          borderRadius: '12px',
           background: 'linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          margin: '0 auto 14px',
-          boxShadow: '0 6px 20px rgba(37, 99, 235, 0.3)'
+          boxShadow: '0 8px 24px rgba(37, 99, 235, 0.35)',
+          border: '1px solid rgba(255, 255, 255, 0.15)'
         }}>
-          <Shield size={28} color="#ffffff" />
+          <Shield size={24} color="#ffffff" strokeWidth={2.2} />
         </div>
-        <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
-          Secure Multi-Device Sync
-        </h2>
-        <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', marginTop: '6px', lineHeight: 1.45 }}>
-          Keep your work synchronized without silently losing changes.
+        <div>
+          <div style={{ fontSize: '1.35rem', fontWeight: 800, color: '#f8fafc', letterSpacing: '-0.02em', lineHeight: 1.1 }}>
+            SyncSafe
+          </div>
+          <span className="auth-brand-badge" style={{ marginTop: '3px' }}>
+            PS-13 · Multi-Device Sync
+          </span>
+        </div>
+      </div>
+
+      {/* Hero Heading */}
+      <div>
+        <h1 className="auth-hero-title">
+          YOUR FILES.<br />
+          EVERY DEVICE.<br />
+          ALWAYS CONSISTENT.
+        </h1>
+        <p className="auth-hero-subtitle" style={{ marginTop: '12px' }}>
+          Work offline. Sync safely. Resolve conflicts without silently losing changes.
         </p>
       </div>
 
-      {/* Modal Body */}
-      <div style={{ padding: '24px 28px' }}>
-        {/* Error Banner */}
-        {errorMessage && (
-          <div style={{
-            padding: '10px 14px',
-            borderRadius: 'var(--radius-md)',
-            background: 'rgba(239, 68, 68, 0.08)',
-            border: '1px solid rgba(239, 68, 68, 0.25)',
-            color: '#dc2626',
-            fontSize: '0.82rem',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            marginBottom: '16px'
-          }}>
-            <AlertCircle size={16} style={{ flexShrink: 0 }} />
-            <span>{errorMessage}</span>
+      {/* Core Architecture Diagram: Laptop → SyncSafe Cloud → Phone */}
+      <div className="auth-arch-card">
+        <div style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#64748b', marginBottom: '14px' }}>
+          Core System Architecture
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+          {/* Node 1: Laptop */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '6px', flex: 1 }}>
+            <div style={{
+              width: '42px',
+              height: '42px',
+              borderRadius: '10px',
+              background: 'rgba(37, 99, 235, 0.12)',
+              border: '1px solid rgba(59, 130, 246, 0.3)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#60a5fa'
+            }}>
+              <Laptop size={20} />
+            </div>
+            <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#f8fafc' }}>
+              Laptop
+            </div>
+            <div style={{ fontSize: '0.68rem', color: '#64748b' }}>
+              Local IndexedDB
+            </div>
           </div>
-        )}
 
-        {/* Primary CTA: Continue as Demo */}
-        <button
-          type="button"
-          className="btn btn-primary"
-          onClick={handleQuickDemoLogin}
-          disabled={loading}
-          style={{
-            width: '100%',
-            padding: '12px',
-            marginBottom: '16px',
-            gap: '8px',
-            fontSize: '0.92rem',
-            fontWeight: 700
-          }}
-        >
-          <Sparkles size={16} />
-          <span>Continue as Demo</span>
-        </button>
+          {/* Flow Indicator 1 */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
+            <div style={{ height: '2px', width: '28px', background: 'linear-gradient(90deg, #3b82f6, #8b5cf6)' }} />
+            <span style={{ fontSize: '0.62rem', color: '#38bdf8', fontWeight: 700 }}>sync</span>
+          </div>
 
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          margin: '14px 0',
-          color: 'var(--text-muted)',
-          fontSize: '0.75rem'
-        }}>
-          <div style={{ flex: 1, height: '1px', background: 'var(--border-subtle)' }} />
-          <span style={{ padding: '0 12px', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)', fontWeight: 600 }}>
-            or sign in with email
-          </span>
-          <div style={{ flex: 1, height: '1px', background: 'var(--border-subtle)' }} />
+          {/* Node 2: SyncSafe Cloud */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '6px', flex: 1.1 }}>
+            <div style={{
+              width: '46px',
+              height: '46px',
+              borderRadius: '12px',
+              background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.25) 0%, rgba(124, 58, 237, 0.25) 100%)',
+              border: '1px solid rgba(139, 92, 246, 0.4)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#c084fc',
+              boxShadow: '0 0 20px rgba(124, 58, 237, 0.2)'
+            }}>
+              <Cloud size={24} />
+            </div>
+            <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#f8fafc' }}>
+              SyncSafe Cloud
+            </div>
+            <div style={{ fontSize: '0.68rem', color: '#a78bfa' }}>
+              Authoritative SQLite
+            </div>
+          </div>
+
+          {/* Flow Indicator 2 */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
+            <div style={{ height: '2px', width: '28px', background: 'linear-gradient(90deg, #8b5cf6, #06b6d4)' }} />
+            <span style={{ fontSize: '0.62rem', color: '#22d3ee', fontWeight: 700 }}>sync</span>
+          </div>
+
+          {/* Node 3: Phone */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '6px', flex: 1 }}>
+            <div style={{
+              width: '42px',
+              height: '42px',
+              borderRadius: '10px',
+              background: 'rgba(6, 182, 212, 0.12)',
+              border: '1px solid rgba(6, 182, 212, 0.3)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#22d3ee'
+            }}>
+              <Smartphone size={20} />
+            </div>
+            <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#f8fafc' }}>
+              Phone
+            </div>
+            <div style={{ fontSize: '0.68rem', color: '#64748b' }}>
+              Offline PWA
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Three Compact Feature Highlights */}
+      <div className="auth-features-list">
+        {/* Highlight 1: Offline First */}
+        <div className="auth-feature-item">
+          <div className="auth-feature-icon-box" style={{ background: 'rgba(6, 182, 212, 0.12)', border: '1px solid rgba(6, 182, 212, 0.25)', color: '#22d3ee' }}>
+            <HardDrive size={16} />
+          </div>
+          <div>
+            <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#f8fafc' }}>
+              1. Offline First
+            </div>
+            <div style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: '2px' }}>
+              Continue working even without an internet connection.
+            </div>
+          </div>
         </div>
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-          {isRegister && (
-            <div>
-              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '5px' }}>
-                Full Name
-              </label>
-              <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                <User size={15} color="var(--text-muted)" style={{ position: 'absolute', left: '12px' }} />
-                <input
-                  type="text"
-                  className="form-input"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Alex Rivera"
-                  style={{ paddingLeft: '36px' }}
-                  required
-                />
-              </div>
-            </div>
-          )}
-
+        {/* Highlight 2: Smart Synchronization */}
+        <div className="auth-feature-item">
+          <div className="auth-feature-icon-box" style={{ background: 'rgba(37, 99, 235, 0.12)', border: '1px solid rgba(59, 130, 246, 0.25)', color: '#60a5fa' }}>
+            <RefreshCw size={16} />
+          </div>
           <div>
-            <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '5px' }}>
-              Email Address
-            </label>
-            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-              <Mail size={15} color="var(--text-muted)" style={{ position: 'absolute', left: '12px' }} />
-              <input
-                type="email"
-                className="form-input"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="demo@syncsafe.io"
-                style={{ paddingLeft: '36px' }}
-                required
-              />
+            <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#f8fafc' }}>
+              2. Smart Synchronization
+            </div>
+            <div style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: '2px' }}>
+              Safely synchronize changes across multiple devices.
             </div>
           </div>
+        </div>
 
+        {/* Highlight 3: Conflict Protection */}
+        <div className="auth-feature-item">
+          <div className="auth-feature-icon-box" style={{ background: 'rgba(124, 58, 237, 0.12)', border: '1px solid rgba(139, 92, 246, 0.25)', color: '#c084fc' }}>
+            <GitMerge size={16} />
+          </div>
           <div>
-            <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '5px' }}>
-              Password
-            </label>
-            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-              <Lock size={15} color="var(--text-muted)" style={{ position: 'absolute', left: '12px' }} />
-              <input
-                type="password"
-                className="form-input"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                style={{ paddingLeft: '36px' }}
-                required
-              />
+            <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#f8fafc' }}>
+              3. Conflict Protection
+            </div>
+            <div style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: '2px' }}>
+              Preserve conflicting changes instead of silently overwriting them.
             </div>
           </div>
-
-          <button
-            type="submit"
-            className="btn btn-secondary"
-            disabled={loading}
-            style={{ width: '100%', padding: '10px', marginTop: '6px', gap: '8px', fontWeight: 700 }}
-          >
-            <span>{loading ? 'Authenticating...' : isRegister ? 'Create Account' : 'Sign In'}</span>
-            <ArrowRight size={15} />
-          </button>
-        </form>
-
-        {/* Toggle between Login and Register */}
-        <div style={{ textAlign: 'center', marginTop: '16px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-          {isRegister ? (
-            <span>
-              Already have an account?{' '}
-              <button
-                onClick={() => setIsRegister(false)}
-                style={{ background: 'transparent', border: 'none', color: '#2563eb', cursor: 'pointer', fontWeight: 700 }}
-              >
-                Sign In
-              </button>
-            </span>
-          ) : (
-            <span>
-              Need an account?{' '}
-              <button
-                onClick={() => setIsRegister(true)}
-                style={{ background: 'transparent', border: 'none', color: '#2563eb', cursor: 'pointer', fontWeight: 700 }}
-              >
-                Create one
-              </button>
-            </span>
-          )}
         </div>
       </div>
     </div>
   );
 
+  // If rendered as the root entry screen (user not yet authenticated)
   if (isRootScreen) {
     return (
-      <div style={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '20px',
-        backgroundColor: 'var(--bg-app)',
-        backgroundImage: 'radial-gradient(circle at 15% 15%, rgba(37, 99, 235, 0.08) 0%, transparent 45%), radial-gradient(circle at 85% 20%, rgba(124, 58, 237, 0.07) 0%, transparent 50%)'
-      }}>
-        {modalBody}
+      <div className="auth-root-wrapper">
+        <div className="auth-container">
+          {renderProductIntro()}
+          <div className="auth-card-side">
+            {renderAuthCard()}
+          </div>
+        </div>
       </div>
     );
   }
 
+  // If rendered as an in-app overlay modal (e.g. session expiry re-auth)
   return (
     <div className="modal-overlay" style={{ zIndex: 2000 }}>
-      {modalBody}
+      <div style={{ maxWidth: '440px', width: '100%' }}>
+        {renderAuthCard()}
+      </div>
     </div>
   );
 };

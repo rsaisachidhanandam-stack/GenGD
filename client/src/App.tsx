@@ -821,16 +821,7 @@ export function App() {
   // ROOT AUTHENTICATION SCREEN: If unauthenticated (no token), render ONLY the authentication view
   if (!token) {
     return (
-      <div style={{
-        minHeight: '100vh',
-        width: '100vw',
-        background: 'radial-gradient(ellipse at 50% 20%, rgba(30, 41, 59, 0.75) 0%, #090d16 100%)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '24px',
-        position: 'relative'
-      }}>
+      <div style={{ position: 'relative', width: '100%', minHeight: '100vh', overflowX: 'hidden' }}>
         {/* Floating Notification */}
         {notification && (
           <div style={{
