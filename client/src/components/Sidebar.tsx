@@ -11,7 +11,8 @@ import {
   Plus,
   FilePlus,
   FolderPlus,
-  ChevronRight
+  ChevronRight,
+  HelpCircle
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -19,13 +20,15 @@ interface SidebarProps {
   onNavigateTab: (tab: string) => void;
   conflictCount: number;
   onOpenNewDocument: () => void;
+  onOpenQuickGuide?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
   activeTab,
   onNavigateTab,
   conflictCount,
-  onOpenNewDocument
+  onOpenNewDocument,
+  onOpenQuickGuide
 }) => {
   const [showNewMenu, setShowNewMenu] = useState(false);
 
@@ -256,6 +259,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <span>Settings & Diagnostics</span>
           </div>
         </div>
+
+        {/* Quick Guide Item */}
+        {onOpenQuickGuide && (
+          <div
+            className="sidebar-nav-item"
+            onClick={onOpenQuickGuide}
+            style={{ padding: '7px 8px', cursor: 'pointer' }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <HelpCircle size={16} color="#60a5fa" />
+              <span>Help & Quick Guide</span>
+            </div>
+          </div>
+        )}
       </div>
     </aside>
   );

@@ -12,7 +12,8 @@ import {
   RotateCcw,
   BookOpen,
   ChevronDown,
-  LogOut
+  LogOut,
+  HelpCircle
 } from 'lucide-react';
 import { type SyncStatusState } from '../services/clientSyncCoordinator';
 
@@ -29,6 +30,7 @@ interface TopNavbarProps {
   isResetting: boolean;
   onOpenDemoScript: () => void;
   onSignOut?: () => void;
+  onOpenQuickGuide?: () => void;
 }
 
 export const TopNavbar: React.FC<TopNavbarProps> = ({
@@ -43,7 +45,8 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
   onResetDemo,
   isResetting,
   onOpenDemoScript,
-  onSignOut
+  onSignOut,
+  onOpenQuickGuide
 }) => {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -232,6 +235,30 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
 
         {/* Global Sync Status Pill */}
         {renderSyncPill()}
+
+        {/* Quick Guide Trigger */}
+        {onOpenQuickGuide && (
+          <button
+            className="btn btn-sm btn-ghost"
+            onClick={onOpenQuickGuide}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              color: 'var(--text-secondary)',
+              border: '1px solid var(--border-medium)',
+              background: 'rgba(255, 255, 255, 0.03)',
+              borderRadius: 'var(--radius-md)',
+              padding: '5px 10px',
+              fontSize: '0.8rem',
+              fontWeight: 600
+            }}
+            title="Open Quick Guide & Demo Cheat Sheet"
+          >
+            <HelpCircle size={15} color="#60a5fa" />
+            <span>Guide</span>
+          </button>
+        )}
 
         {/* Sync Lab Quick Trigger (for Judges) */}
         <button

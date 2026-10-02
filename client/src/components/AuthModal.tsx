@@ -14,13 +14,15 @@ interface AuthModalProps {
   onLoginSuccess: (token: string, user: { id: string; name: string; email: string }) => void;
   initialError?: string | null;
   apiBaseUrl: string;
+  isRootScreen?: boolean;
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({
   isOpen,
   onLoginSuccess,
   initialError,
-  apiBaseUrl
+  apiBaseUrl,
+  isRootScreen = false
 }) => {
   const [isRegister, setIsRegister] = useState(false);
   const [email, setEmail] = useState('demo@syncsafe.io');
@@ -29,7 +31,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(initialError || null);
 
-  if (!isOpen) return null;
+  React.useEffect(() => {
+    if (initialError) {
+      setErrorMessage(initialError);
+    }
+  }, [initialError]);
+
+  if (!isOpen && !isRootScreen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,18 +100,18 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }
   };
 
-  return (
-    <div className="modal-overlay" style={{ zIndex: 2000 }}>
-      <div
-        className="modal-content"
-        style={{
-          maxWidth: '440px',
-          padding: '0',
-          boxShadow: '0 25px 60px rgba(0, 0, 0, 0.8)',
-          border: '1px solid var(--border-medium)',
-          overflow: 'hidden'
-        }}
-      >
+  const modalBody = (
+    <div
+      className="modal-content"
+      style={{
+        maxWidth: '440px',
+        width: '100%',
+        padding: '0',
+        boxShadow: '0 25px 60px rgba(0, 0, 0, 0.85)',
+        border: '1px solid var(--border-medium)',
+        overflow: 'hidden'
+      }}
+    >
         {/* Modal Header */}
         <div style={{
           padding: '24px 28px 18px',
@@ -278,8 +286,17 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               </span>
             )}
           </div>
-        </div>
       </div>
+    </div>
+  );
+
+  if (isRootScreen) {
+    return modalBody;
+  }
+
+  return (
+    <div className="modal-overlay" style={{ zIndex: 2000 }}>
+      {modalBody}
     </div>
   );
 };

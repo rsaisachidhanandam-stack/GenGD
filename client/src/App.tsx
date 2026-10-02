@@ -14,19 +14,22 @@ import { ConflictResolverModal } from './components/ConflictResolverModal';
 import { VersionHistoryModal } from './components/VersionHistoryModal';
 import { PendingQueueModal } from './components/PendingQueueModal';
 import { DemoScriptWalkthrough } from './components/DemoScriptWalkthrough';
+import { QuickGuideModal } from './components/QuickGuideModal';
 
 import { ClientSyncCoordinator, type SyncStatusState } from './services/clientSyncCoordinator';
 import { type CachedDocument, type PendingQueueItem } from './services/indexedDbStorage';
-import { AlertTriangle, CheckCircle2, Trash2, Star } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Trash2, Star, Shield } from 'lucide-react';
 
 const API_BASE_URL = 'http://localhost:5000';
 
 export function App() {
   const [token, setToken] = useState<string | null>(() => localStorage.getItem('syncsafe_token'));
   const [user, setUser] = useState<{ id: string; name: string; email: string } | null>(null);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [serverOnline, setServerOnline] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authErrorMessage, setAuthErrorMessage] = useState<string | null>(null);
+  const [showQuickGuide, setShowQuickGuide] = useState(false);
 
   // Application Navigation
   const [activeTab, setActiveTab] = useState<'drive' | 'recent' | 'starred' | 'conflicts' | 'trash' | 'settings' | 'sync-lab' | 'document'>('drive');
@@ -100,7 +103,13 @@ export function App() {
     localStorage.removeItem('syncsafe_token');
     setToken(null);
     setUser(null);
-    setShowAuthModal(true);
+    setActiveDocument(null);
+    setSelectedDocId(null);
+    setDocuments([]);
+    setVersions([]);
+    setConflicts([]);
+    setActiveTab('drive');
+    setShowAuthModal(false);
     setAuthErrorMessage(null);
     notify('info', 'Signed out successfully.');
   };
@@ -221,17 +230,18 @@ export function App() {
     }
   }, [activeDocument?.id, token, fetchDocumentsList, handleAuthExpiry]);
 
-  // Poll backend health & seed initial demo data if needed
+  // Verify existing saved session or initialize unauthenticated state
   const initApp = useCallback(async () => {
+    setIsCheckingAuth(true);
     try {
       const healthRes = await fetch(`${API_BASE_URL}/health`).catch(() => null);
       if (!healthRes || !healthRes.ok) {
         setServerOnline(false);
-        return;
+      } else {
+        setServerOnline(true);
       }
-      setServerOnline(true);
 
-      // 1. Check existing saved token in localStorage
+      // Check existing saved token in localStorage
       const savedToken = localStorage.getItem('syncsafe_token');
       if (savedToken) {
         const meRes = await fetch(`${API_BASE_URL}/api/auth/me`, {
@@ -251,46 +261,17 @@ export function App() {
         }
       }
 
-      // 2. Try auto-logging in demo user
-      const loginRes = await fetch(`${API_BASE_URL}/api/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: 'demo@syncsafe.io', password: 'demo1234' })
-      }).catch(() => null);
-
-      if (loginRes && loginRes.ok) {
-        const lData = await loginRes.json();
-        localStorage.setItem('syncsafe_token', lData.token);
-        setToken(lData.token);
-        setUser(lData.user);
-        setShowAuthModal(false);
-        await refreshDocumentData(undefined, lData.token);
-        return;
-      }
-
-      // 3. If login failed because database is completely empty, call demo reset to seed
-      const resetRes = await fetch(`${API_BASE_URL}/api/demo/reset`, { method: 'POST' }).catch(() => null);
-      if (resetRes && resetRes.ok) {
-        const rData = await resetRes.json();
-        localStorage.setItem('syncsafe_token', rData.seed.token);
-        setToken(rData.seed.token);
-        setUser(rData.seed.user);
-        setActiveDocument(rData.seed.document);
-        setSelectedDocId(rData.seed.document.id);
-        setShowAuthModal(false);
-
-        await laptopCoordinator.storage.saveDocument(rData.seed.document);
-        await mobileCoordinator.storage.saveDocument(rData.seed.document);
-        await refreshDocumentData(rData.seed.document.id, rData.seed.token);
-        return;
-      }
-
-      setShowAuthModal(true);
+      // If no valid saved token exists, keep unauthenticated so user sees the login screen
+      setToken(null);
+      setUser(null);
     } catch (err: any) {
       console.error('Initialization error:', err);
-      setShowAuthModal(true);
+      setToken(null);
+      setUser(null);
+    } finally {
+      setIsCheckingAuth(false);
     }
-  }, [laptopCoordinator, mobileCoordinator, refreshDocumentData, handleAuthExpiry]);
+  }, [refreshDocumentData, handleAuthExpiry]);
 
   useEffect(() => {
     initApp();
@@ -568,6 +549,84 @@ export function App() {
     return documents.find(d => d.id === selectedDocId) || activeDocument;
   }, [documents, selectedDocId, activeDocument]);
 
+  // 1. Loading State during initial session verification
+  if (isCheckingAuth) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        background: 'var(--bg-app)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: 'var(--text-secondary)'
+      }}>
+        <div style={{
+          width: '52px',
+          height: '52px',
+          borderRadius: '14px',
+          background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginBottom: '16px',
+          boxShadow: '0 8px 24px rgba(59, 130, 246, 0.4)'
+        }}>
+          <Shield size={28} color="#ffffff" />
+        </div>
+        <div style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-primary)' }}>Loading SyncSafe...</div>
+      </div>
+    );
+  }
+
+  // 2. ROOT AUTHENTICATION SCREEN: If unauthenticated, render ONLY the authentication view
+  if (!token || !user) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        width: '100vw',
+        background: 'radial-gradient(ellipse at 50% 20%, rgba(30, 41, 59, 0.75) 0%, #090d16 100%)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '24px',
+        position: 'relative'
+      }}>
+        {/* Floating Notification */}
+        {notification && (
+          <div style={{
+            position: 'fixed',
+            top: '24px',
+            right: '24px',
+            zIndex: 3000,
+            padding: '12px 18px',
+            borderRadius: 'var(--radius-md)',
+            background: notification.type === 'error' ? 'rgba(244, 63, 94, 0.95)' :
+                        notification.type === 'success' ? 'rgba(16, 185, 129, 0.95)' : 'rgba(59, 130, 246, 0.95)',
+            color: '#ffffff',
+            fontWeight: 600,
+            fontSize: '0.85rem',
+            boxShadow: 'var(--shadow-lg)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}>
+            {notification.type === 'error' ? <AlertTriangle size={16} /> : <CheckCircle2 size={16} />}
+            <span>{notification.text}</span>
+          </div>
+        )}
+
+        <AuthModal
+          isOpen={true}
+          isRootScreen={true}
+          onLoginSuccess={handleLoginSuccess}
+          initialError={authErrorMessage}
+          apiBaseUrl={API_BASE_URL}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="app-shell">
       {/* Top Navigation */}
@@ -584,6 +643,7 @@ export function App() {
         isResetting={isResetting}
         onOpenDemoScript={() => setShowDemoScript(true)}
         onSignOut={handleSignOut}
+        onOpenQuickGuide={() => setShowQuickGuide(true)}
       />
 
       {/* Floating Notification */}
@@ -618,6 +678,7 @@ export function App() {
           onNavigateTab={(tab) => setActiveTab(tab as any)}
           conflictCount={conflicts.length}
           onOpenNewDocument={() => setShowNewDocModal(true)}
+          onOpenQuickGuide={() => setShowQuickGuide(true)}
         />
 
         {/* Content Area */}
@@ -843,13 +904,22 @@ export function App() {
         />
       )}
 
-      {/* Authentication Modal */}
-      <AuthModal
-        isOpen={showAuthModal || !token || !user}
-        onLoginSuccess={handleLoginSuccess}
-        initialError={authErrorMessage}
-        apiBaseUrl={API_BASE_URL}
+      {/* Quick Guide & Demo Manual Modal */}
+      <QuickGuideModal
+        isOpen={showQuickGuide}
+        onClose={() => setShowQuickGuide(false)}
+        onOpenSyncLab={() => setActiveTab('sync-lab')}
       />
+
+      {/* Authentication Modal (Overlay mode if triggered while in app) */}
+      {showAuthModal && (
+        <AuthModal
+          isOpen={showAuthModal}
+          onLoginSuccess={handleLoginSuccess}
+          initialError={authErrorMessage}
+          apiBaseUrl={API_BASE_URL}
+        />
+      )}
     </div>
   );
 }
