@@ -18,28 +18,77 @@ import { QuickGuideModal } from './components/QuickGuideModal';
 
 import { ClientSyncCoordinator, type SyncStatusState } from './services/clientSyncCoordinator';
 import { type CachedDocument, type PendingQueueItem } from './services/indexedDbStorage';
-import { AlertTriangle, CheckCircle2, Trash2, Star, Shield } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Trash2, Star } from 'lucide-react';
 
 const API_BASE_URL = 'http://localhost:5000';
 
 export function App() {
   const [token, setToken] = useState<string | null>(() => localStorage.getItem('syncsafe_token'));
-  const [user, setUser] = useState<{ id: string; name: string; email: string } | null>(null);
-  const [isCheckingAuth, setIsCheckingAuth] = useState(() => Boolean(localStorage.getItem('syncsafe_token')));
+  const [user, setUser] = useState<{ id: string; name: string; email: string } | null>(() => {
+    try {
+      const cached = localStorage.getItem('syncsafe_user');
+      if (cached) return JSON.parse(cached);
+      const t = localStorage.getItem('syncsafe_token');
+      if (t) {
+        const parts = t.split('.');
+        if (parts.length === 3) {
+          const payload = JSON.parse(atob(parts[1]));
+          const email = payload.email || 'demo@syncsafe.io';
+          const name = email.split('@')[0] === 'demo' ? 'Alex Rivera' : email;
+          return { id: payload.userId, name, email };
+        }
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  });
+  const [isLoadingDocs, setIsLoadingDocs] = useState(true);
   const [serverOnline, setServerOnline] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authErrorMessage, setAuthErrorMessage] = useState<string | null>(null);
   const [showQuickGuide, setShowQuickGuide] = useState(false);
 
-  // Application Navigation
-  const [activeTab, setActiveTab] = useState<'drive' | 'recent' | 'starred' | 'conflicts' | 'trash' | 'settings' | 'sync-lab' | 'document'>('drive');
+  // Application Navigation with localStorage preservation
+  const [activeTab, setActiveTab] = useState<'drive' | 'recent' | 'starred' | 'conflicts' | 'trash' | 'settings' | 'sync-lab' | 'document'>(() => {
+    try {
+      const saved = localStorage.getItem('syncsafe_active_tab');
+      if (saved && ['drive', 'recent', 'starred', 'conflicts', 'trash', 'settings', 'sync-lab', 'document'].includes(saved)) {
+        return saved as any;
+      }
+    } catch {}
+    return 'drive';
+  });
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Documents & Selection
+  // Documents & Selection with localStorage preservation
   const [documents, setDocuments] = useState<CachedDocument[]>([]);
   const [activeDocument, setActiveDocument] = useState<CachedDocument | null>(null);
-  const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
+  const [selectedDocId, setSelectedDocId] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem('syncsafe_selected_doc_id');
+    } catch {
+      return null;
+    }
+  });
   const [showDetailsPanel, setShowDetailsPanel] = useState(true);
+
+  // Preserve route & selected document across reloads
+  useEffect(() => {
+    try {
+      localStorage.setItem('syncsafe_active_tab', activeTab);
+    } catch {}
+  }, [activeTab]);
+
+  useEffect(() => {
+    try {
+      if (selectedDocId) {
+        localStorage.setItem('syncsafe_selected_doc_id', selectedDocId);
+      } else {
+        localStorage.removeItem('syncsafe_selected_doc_id');
+      }
+    } catch {}
+  }, [selectedDocId]);
 
   // Lineage & Conflicts Data
   const [versions, setVersions] = useState<any[]>([]);
@@ -81,30 +130,48 @@ export function App() {
 
   // Central stale/invalid token handler
   const handleAuthExpiry = useCallback((message: string = 'Your session has expired. Please sign in again.') => {
-    localStorage.removeItem('syncsafe_token');
+    try {
+      localStorage.removeItem('syncsafe_token');
+      localStorage.removeItem('syncsafe_user');
+      localStorage.removeItem('syncsafe_active_tab');
+      localStorage.removeItem('syncsafe_selected_doc_id');
+    } catch {}
     setToken(null);
     setUser(null);
+    setActiveDocument(null);
+    setSelectedDocId(null);
+    setDocuments([]);
+    setVersions([]);
+    setConflicts([]);
+    setActiveTab('drive');
     setAuthErrorMessage(message);
     setShowAuthModal(true);
     notify('error', message);
   }, []);
 
   const handleLoginSuccess = async (newToken: string, newUser: any) => {
-    localStorage.setItem('syncsafe_token', newToken);
+    try {
+      localStorage.setItem('syncsafe_token', newToken);
+      localStorage.setItem('syncsafe_user', JSON.stringify(newUser));
+    } catch {}
     setToken(newToken);
     setUser(newUser);
-    setIsCheckingAuth(false);
     setShowAuthModal(false);
     setAuthErrorMessage(null);
     notify('success', `Signed in as ${newUser.name}`);
     await refreshDocumentData(undefined, newToken);
+    setIsLoadingDocs(false);
   };
 
   const handleSignOut = () => {
-    localStorage.removeItem('syncsafe_token');
+    try {
+      localStorage.removeItem('syncsafe_token');
+      localStorage.removeItem('syncsafe_user');
+      localStorage.removeItem('syncsafe_active_tab');
+      localStorage.removeItem('syncsafe_selected_doc_id');
+    } catch {}
     setToken(null);
     setUser(null);
-    setIsCheckingAuth(false);
     setActiveDocument(null);
     setSelectedDocId(null);
     setDocuments([]);
@@ -172,9 +239,12 @@ export function App() {
 
   // Refresh active document, versions, and conflicts
   const refreshDocumentData = useCallback(async (docId?: string, authToken?: string) => {
-    const currentDocId = docId || activeDocument?.id;
+    const currentDocId = docId || activeDocument?.id || selectedDocId;
     const currentToken = authToken || token;
-    if (!currentToken) return;
+    if (!currentToken) {
+      setIsLoadingDocs(false);
+      return;
+    }
 
     try {
       // 1. Fetch latest doc if docId present
@@ -229,16 +299,18 @@ export function App() {
       await fetchDocumentsList(currentToken);
     } catch (err) {
       console.error('Failed to refresh document data:', err);
+    } finally {
+      setIsLoadingDocs(false);
     }
-  }, [activeDocument?.id, token, fetchDocumentsList, handleAuthExpiry]);
+  }, [activeDocument?.id, selectedDocId, token, fetchDocumentsList, handleAuthExpiry]);
 
-  // Verify existing saved session or initialize unauthenticated state
+  // Verify existing saved session in background
   const initApp = useCallback(async () => {
     const savedToken = localStorage.getItem('syncsafe_token');
     if (!savedToken) {
       setToken(null);
       setUser(null);
-      setIsCheckingAuth(false);
+      setIsLoadingDocs(false);
       // Background ping for connectivity indicator
       fetch(`${API_BASE_URL}/health`)
         .then((r) => setServerOnline(r.ok))
@@ -246,9 +318,8 @@ export function App() {
       return;
     }
 
-    setIsCheckingAuth(true);
     try {
-      // Validate saved token with server
+      // Validate saved token with server in background
       const meRes = await fetch(`${API_BASE_URL}/api/auth/me`, {
         headers: { Authorization: `Bearer ${savedToken}` }
       }).catch(() => null);
@@ -258,28 +329,26 @@ export function App() {
         setServerOnline(true);
         setToken(savedToken);
         setUser(meData.user);
+        try {
+          localStorage.setItem('syncsafe_user', JSON.stringify(meData.user));
+        } catch {}
         setShowAuthModal(false);
-        // Preload documents so My Drive is immediately populated when rendered
-        await refreshDocumentData(undefined, savedToken).catch(console.error);
+        // Refresh documents and active document in background
+        await refreshDocumentData(selectedDocId || undefined, savedToken).catch(console.error);
         return;
       } else if (meRes && meRes.status === 401) {
         handleAuthExpiry('Your session has expired. Please sign in again.');
         return;
       } else {
-        // Network or server unreachable
+        // Network or server unreachable - keep offline functionality
         setServerOnline(false);
       }
-
-      setToken(null);
-      setUser(null);
     } catch (err: any) {
       console.error('Initialization error:', err);
-      setToken(null);
-      setUser(null);
     } finally {
-      setIsCheckingAuth(false);
+      setIsLoadingDocs(false);
     }
-  }, [refreshDocumentData, handleAuthExpiry]);
+  }, [refreshDocumentData, handleAuthExpiry, selectedDocId]);
 
   useEffect(() => {
     initApp();
@@ -557,38 +626,8 @@ export function App() {
     return documents.find(d => d.id === selectedDocId) || activeDocument;
   }, [documents, selectedDocId, activeDocument]);
 
-  // 1. Loading State during initial session verification
-  if (isCheckingAuth) {
-    return (
-      <div style={{
-        minHeight: '100vh',
-        background: 'var(--bg-app)',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        color: 'var(--text-secondary)'
-      }}>
-        <div style={{
-          width: '52px',
-          height: '52px',
-          borderRadius: '14px',
-          background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginBottom: '16px',
-          boxShadow: '0 8px 24px rgba(59, 130, 246, 0.4)'
-        }}>
-          <Shield size={28} color="#ffffff" />
-        </div>
-        <div style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-primary)' }}>Loading SyncSafe...</div>
-      </div>
-    );
-  }
-
-  // 2. ROOT AUTHENTICATION SCREEN: If unauthenticated, render ONLY the authentication view
-  if (!token || !user) {
+  // ROOT AUTHENTICATION SCREEN: If unauthenticated (no token), render ONLY the authentication view
+  if (!token) {
     return (
       <div style={{
         minHeight: '100vh',
@@ -711,6 +750,7 @@ export function App() {
                   searchQuery={searchQuery}
                   versions={versions}
                   conflicts={conflicts}
+                  isLoading={isLoadingDocs}
                 />
               </div>
 
@@ -756,6 +796,7 @@ export function App() {
                   subtitle="Recently modified or synchronized documents"
                   emptyTitle="No recent activity"
                   emptySubtitle="Documents created or edited recently will appear here."
+                  isLoading={isLoadingDocs}
                 />
               </div>
             </div>

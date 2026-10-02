@@ -9,7 +9,8 @@ import {
   Plus,
   Activity,
   GitMerge,
-  FolderOpen
+  FolderOpen,
+  RefreshCw
 } from 'lucide-react';
 import { type CachedDocument } from '../services/indexedDbStorage';
 
@@ -26,6 +27,7 @@ interface DriveViewProps {
   subtitle?: string;
   emptyTitle?: string;
   emptySubtitle?: string;
+  isLoading?: boolean;
 }
 
 export const DriveView: React.FC<DriveViewProps> = ({
@@ -40,7 +42,8 @@ export const DriveView: React.FC<DriveViewProps> = ({
   title = 'My Drive',
   subtitle = 'Your files, synchronized safely across devices.',
   emptyTitle = 'No documents found',
-  emptySubtitle = 'Create your first synchronized Markdown document to get started.'
+  emptySubtitle = 'Create your first synchronized Markdown document to get started.',
+  isLoading = false
 }) => {
   const [viewLayout, setViewLayout] = useState<'grid' | 'list'>('grid');
   const [sortBy, setSortBy] = useState<'date' | 'name' | 'version'>('date');
@@ -273,7 +276,19 @@ export const DriveView: React.FC<DriveViewProps> = ({
       )}
 
       {/* Main Files Area */}
-      {sortedDocs.length === 0 ? (
+      {isLoading && sortedDocs.length === 0 ? (
+        <div style={{
+          textAlign: 'center',
+          padding: '60px 20px',
+          background: 'var(--bg-surface)',
+          borderRadius: 'var(--radius-xl)',
+          border: '1px solid var(--border-subtle)',
+          color: 'var(--text-secondary)'
+        }}>
+          <RefreshCw size={24} className="animate-spin" color="var(--accent-blue)" style={{ margin: '0 auto 12px' }} />
+          <p style={{ fontSize: '0.9rem', fontWeight: 500 }}>Loading documents...</p>
+        </div>
+      ) : sortedDocs.length === 0 ? (
         <div style={{
           textAlign: 'center',
           padding: '60px 20px',
